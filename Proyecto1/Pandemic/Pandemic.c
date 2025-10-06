@@ -114,6 +114,8 @@ int colocacion_jugadores(){
     scanf("%s", jugador2);
 
     printf("Bienvenidos jugadores %s y %s\n", jugador1, jugador2);
+
+    //Falta la colocacion de los jugadores xd
     return 0;
 }
 
