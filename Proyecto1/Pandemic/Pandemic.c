@@ -11,8 +11,8 @@ struct Dnodo{
     char pais[30]; //Se puede hacer mejor xd
 
     //Las problematicas empiezan en 0 por defecto xd
-    int aspecto1 = 0;
-    int aspecto2 = 0;
+    int aspecto1;
+    int aspecto2;
 
     struct Dnodo* sigt; //Vecino1 del pais (Creo xd)
     struct Dnodo* ante; //Vecino2 del pais (Creo xd)
@@ -39,6 +39,9 @@ struct Dnodo* crear_nodo(const char* NombrePais){
 
     strncpy(nn->pais, NombrePais, 29);
     nn->pais[29] = '\0';
+
+    nn -> aspecto1 = 0;
+    nn -> aspecto2 = 0;
 
     nn -> ante = NULL;
     nn -> sigt = NULL;
@@ -101,15 +104,26 @@ int creacion_problematicas(struct Dlista* listaPaises){
 }
 
 int colocacion_jugadores(){
+    char jugador1[30];
+    char jugador2[30];
+
+    printf("Ingrese el nombre del jugador 1: ");
+    scanf("%s", jugador1);
+
+    printf("Ingrese el nombre del jugador 2: ");
+    scanf("%s", jugador2);
+
+    printf("Bienvenidos jugadores %s y %s\n", jugador1, jugador2);
     return 0;
 }
 
 //Función principal, aquí se ejecutara el juego:
 int main(){
     printf("--- Bienvenido a Pandemic ---\n");
-        struct Dlista* juego = crear_lista();
-        const char* archivo_paises = "../Documentos/Países de América Latina.txt";
-        crear_tablero(juego, archivo_paises);
+    colocacion_jugadores();
+    struct Dlista* juego = crear_lista();
+    const char* archivo_paises = "../Documentos/Países de América Latina.txt";
+    crear_tablero(juego, archivo_paises);
 
         //Comprobación del tablero
         int indicePais = 1;
