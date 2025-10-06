@@ -9,6 +9,11 @@
 //Dnodo es por el doblemente enlazada, para diferenciar de la no enlazada y de los nodos de árboles, al igual que Dlista
 struct Dnodo{
     char pais[30]; //Se puede hacer mejor xd
+
+    //Las problematicas empiezan en 0 por defecto xd
+    int aspecto1 = 0;
+    int aspecto2 = 0;
+
     struct Dnodo* sigt; //Vecino1 del pais (Creo xd)
     struct Dnodo* ante; //Vecino2 del pais (Creo xd)
 };
@@ -91,6 +96,13 @@ int crear_tablero(struct Dlista* lista, const char* nombre_archivo){
     return 0;
 }
 
+int creacion_problematicas(struct Dlista* listaPaises){
+    return 0;
+}
+
+int colocacion_jugadores(){
+    return 0;
+}
 
 //Función principal, aquí se ejecutara el juego:
 int main(){
