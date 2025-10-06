@@ -157,6 +157,40 @@ int crear_tablero(struct Dlista* lista, const char* nombre_archivo){
 }
 
 int creacion_problematicas(struct Dlista* listaPaises){
+    if (listaPaises == NULL || listaPaises->inicio == NULL){
+        return -1;
+    }
+
+    struct Dnodo* actual = listaPaises->inicio;
+    int contador = 1;
+
+    while (actual != NULL && contador <= 9){
+        if (contador <= 3){
+            actual->aspecto1 = 3;
+            actual->aspecto2 = 2;
+        } 
+        else if (contador <= 6){
+            actual->aspecto1 = 2;
+            actual->aspecto2 = 1;
+        } 
+        else { 
+            actual->aspecto1 = 1;
+            actual->aspecto2 = 1;
+        }
+
+        actual = actual->sigt;
+        contador++;
+    }
+
+    printf("\n--- Paises y problematicas ---\n");
+    actual = listaPaises->inicio;
+    contador = 1;
+    while (actual != NULL){
+        printf("%2d. %-25s | A1: %d | A2: %d\n",contador++, actual->pais, actual->aspecto1, actual->aspecto2);
+        actual = actual->sigt;
+    }
+    printf("--------------------------------------------\n");
+
     return 0;
 }
 
@@ -181,18 +215,8 @@ int main(){
     printf("--- Bienvenido a Pandemic ---\n");
     //colocacion_jugadores();
     struct Dlista* juego = crear_lista();
-    const char* archivo_paises = "../Documentos/Países de América Latina.txt";
+    const char* archivo_paises = "Países de América Latina.txt";
     crear_tablero(juego, archivo_paises);
-
-        //Comprobación del tablero
-        int indicePais = 1;
-        if(juego != NULL){
-            printf("Países cargados:\n");
-            struct Dnodo* actual = juego -> inicio;
-            while(actual != NULL){
-                printf("Pais %d: %s\n", indicePais++, actual -> pais);
-                actual = actual -> sigt;
-            }
-        }
+    creacion_problematicas(juego);
     return 0;
 }
