@@ -66,7 +66,26 @@ int insertar_inicio(struct Dlista* lista, const char* NombrePais){
 }
 
 int contar_paises(const char* nombre_archivo){
-    return 0;
+    FILE *archivo = fopen(nombre_archivo, "r");
+    char linea[60];
+    int contador = 0;
+
+    if(archivo == NULL){
+        return -1;
+    }
+
+    while(fgets(linea, 60, archivo) != NULL){
+        size_t len = strlen(linea);
+        if (len > 0 && linea[len-1] == '\n') {
+            linea[len-1] = '\0';
+            len--;
+        }
+        if (len > 0) {
+            contador++;
+        }
+    }
+    fclose(archivo);
+    return contador;
 }
 
 
@@ -128,9 +147,10 @@ int colocacion_jugadores(){
 //Función principal, aquí se ejecutara el juego:
 int main(){
     printf("--- Bienvenido a Pandemic ---\n");
-    colocacion_jugadores();
+    //colocacion_jugadores();
     struct Dlista* juego = crear_lista();
     const char* archivo_paises = "../Documentos/Países de América Latina.txt";
+    printf("%d\n", contar_paises(archivo_paises));
     crear_tablero(juego, archivo_paises);
 
         //Comprobación del tablero
