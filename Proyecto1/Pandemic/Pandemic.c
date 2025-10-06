@@ -93,9 +93,18 @@ int contar_paises(const char* nombre_archivo){
 int crear_tablero(struct Dlista* lista, const char* nombre_archivo){
     char linea[60];
     FILE *archivo = fopen(nombre_archivo, "r");
+    int total_paises = contar_paises(nombre_archivo);
+
+    int indices_elegidos[9] = {0};
+    char paises_archivo[30][60];
 
     if (archivo == NULL) {
         perror("Error al abrir el archivo de países");
+        return -1;
+    }
+
+    if(total_paises < 9){
+        fprintf(stderr, "Error: No hay suficientes países cargados para el inicio del juego.\n");
         return -1;
     }
     
@@ -118,6 +127,7 @@ int crear_tablero(struct Dlista* lista, const char* nombre_archivo){
             // printf("Insertado: %s\n", linea);
         }
     }
+    
     //Cerrar el archivo
     fclose(archivo);
     //printf("Carga de países finalizada.\n");
@@ -150,7 +160,6 @@ int main(){
     //colocacion_jugadores();
     struct Dlista* juego = crear_lista();
     const char* archivo_paises = "../Documentos/Países de América Latina.txt";
-    printf("%d\n", contar_paises(archivo_paises));
     crear_tablero(juego, archivo_paises);
 
         //Comprobación del tablero
