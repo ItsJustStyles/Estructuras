@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h> 
 #include <string.h> 
+#include <time.h>
 
 //Funciones para manejo de datos;
 
@@ -93,7 +94,7 @@ int contar_paises(const char* nombre_archivo){
 int crear_tablero(struct Dlista* lista, const char* nombre_archivo){
     char linea[60];
     FILE *archivo = fopen(nombre_archivo, "r");
-    int total_paises = contar_paises(nombre_archivo);
+    int total_paises = 0;
 
     int indices_elegidos[9] = {0};
     char paises_archivo[30][60];
@@ -103,34 +104,55 @@ int crear_tablero(struct Dlista* lista, const char* nombre_archivo){
         return -1;
     }
 
-    if(total_paises < 9){
+    int total_paises_archivo = contar_paises(nombre_archivo);
+    if(total_paises_archivo < 9){
         fprintf(stderr, "Error: No hay suficientes países cargados para el inicio del juego.\n");
         return -1;
     }
     
-    while (fgets(linea, 60, archivo) != NULL) {
+    while (fgets(linea, 60, archivo) != NULL && total_paises < 30) {
         size_t len = strlen(linea);
         if (len > 0 && linea[len-1] == '\n') {
             linea[len-1] = '\0'; // Reemplaza '\n' por el terminador nulo '\0'
         }
         
-        if (strlen(linea) == 0) {
-            continue;
-        }
-
-        // Insertar el país en la lista doblemente enlazada
-        if (insertar_inicio(lista, linea) != 0) {
-            fprintf(stderr, "Error al insertar el país: %s\n", linea);
-            return -1;
-        } else {
-            // Comprobación de que se insertó
-            // printf("Insertado: %s\n", linea);
+        if (strlen(linea) > 0) {
+            strncpy(paises_archivo[total_paises], linea, 59);
+            paises_archivo[total_paises][59] = '\0';
+            total_paises++;
         }
     }
-    
     //Cerrar el archivo
     fclose(archivo);
-    //printf("Carga de países finalizada.\n");
+    srand(time(NULL));
+    int contador = 0;
+    while(contador < 9){
+        int indice_aleatorio = rand() % total_paises;
+        int ya_elegido = 0;
+        
+        for (int i = 0; i < contador; i++) {
+            if (indices_elegidos[i] == indice_aleatorio) {
+                ya_elegido = 1;
+                break;
+            }
+        }
+        
+        if (!ya_elegido) {
+            indices_elegidos[contador] = indice_aleatorio;
+            contador++;
+        }
+    }
+
+    for (int i = 0; i < 9; i++) {
+        int indice = indices_elegidos[i];
+        const char* pais = paises_archivo[indice];
+
+        if (insertar_inicio(lista, pais) != 0) {
+            fprintf(stderr, "Error al insertar el país seleccionado: %s\n", pais);
+            return -1;
+        }
+    }
+
     return 0;
 }
 
