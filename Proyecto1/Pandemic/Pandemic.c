@@ -65,6 +65,12 @@ int insertar_inicio(struct Dlista* lista, const char* NombrePais){
     return 0;
 }
 
+int contar_paises(const char* nombre_archivo){
+    return 0;
+}
+
+
+
 int crear_tablero(struct Dlista* lista, const char* nombre_archivo){
     char linea[60];
     FILE *archivo = fopen(nombre_archivo, "r");
