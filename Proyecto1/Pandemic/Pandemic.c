@@ -9,7 +9,7 @@
 
 //Dnodo es por el doblemente enlazada, para diferenciar de la no enlazada y de los nodos de árboles, al igual que Dlista
 struct Dnodo{
-    char pais[30]; //Se puede hacer mejor xd
+    char pais[25]; //Se puede hacer mejor xd
 
     //Las problematicas empiezan en 0 por defecto xd
     int aspecto1;
@@ -38,8 +38,8 @@ struct Dnodo* crear_nodo(const char* NombrePais){
         return NULL;
     }
 
-    strncpy(nn->pais, NombrePais, 29);
-    nn->pais[29] = '\0';
+    strncpy(nn->pais, NombrePais, 24);
+    nn->pais[24] = '\0';
 
     nn -> aspecto1 = 0;
     nn -> aspecto2 = 0;
@@ -97,7 +97,7 @@ int crear_tablero(struct Dlista* lista, const char* nombre_archivo){
     int total_paises = 0;
 
     int indices_elegidos[9] = {0};
-    char paises_archivo[30][60];
+    char paises_archivo[30][30];
 
     if (archivo == NULL) {
         perror("Error al abrir el archivo de países");
@@ -110,15 +110,21 @@ int crear_tablero(struct Dlista* lista, const char* nombre_archivo){
         return -1;
     }
     
-    while (fgets(linea, 60, archivo) != NULL && total_paises < 30) {
+    while (fgets(linea, 30, archivo) != NULL && total_paises < 30) {
         size_t len = strlen(linea);
+
+        while (len > 0 && (linea[len - 1] == ' ' || linea[len - 1] == '\t')) {
+            linea[len - 1] = '\0'; // Reemplaza espacio/tab por nulo
+            len--;
+        }
+        
         if (len > 0 && linea[len-1] == '\n') {
             linea[len-1] = '\0'; // Reemplaza '\n' por el terminador nulo '\0'
         }
-        
+
         if (strlen(linea) > 0) {
-            strncpy(paises_archivo[total_paises], linea, 59);
-            paises_archivo[total_paises][59] = '\0';
+            strncpy(paises_archivo[total_paises], linea, 29);
+            paises_archivo[total_paises][29] = '\0';
             total_paises++;
         }
     }
@@ -156,6 +162,20 @@ int crear_tablero(struct Dlista* lista, const char* nombre_archivo){
     return 0;
 }
 
+
+int contar_ancho_visual_utf8(const char *s) {
+    int ancho_visual = 0;
+    for (size_t i = 0; s[i] != '\0'; i++) {
+        // Si el byte NO está en el rango 0x80 a 0xBF, es el inicio de un carácter
+        // (ASCII estándar o inicio de secuencia multibyte).
+        if ((s[i] & 0xC0) != 0x80) {
+            ancho_visual++;
+        }
+    }
+    return ancho_visual;
+}
+
+
 int creacion_problematicas(struct Dlista* listaPaises){
     if (listaPaises == NULL || listaPaises->inicio == NULL){
         return -1;
@@ -182,15 +202,35 @@ int creacion_problematicas(struct Dlista* listaPaises){
         contador++;
     }
 
-    printf("\n--- Paises y problematicas ---\n");
+        // 1. Imprimir encabezado de la tabla (con anchos fijos y limpios)
+    printf("\n--- PAÍSES Y PROBLEMÁTICAS ---\n");
+    printf("\n");
+    // Formato: Contador (3) | País (30) | A1 (5) | A2 (5)
+    printf("%-3s| %-35s| %-5s| %-5s\n", "#", "PAÍS", "A1", "A2");
+    printf("---------------------------------------------------\n"); 
+
     actual = listaPaises->inicio;
     contador = 1;
-    while (actual != NULL){
-        printf("%2d. %-25s | A1: %d | A2: %d\n",contador++, actual->pais, actual->aspecto1, actual->aspecto2);
+    
+   while (actual != NULL) {
+        int ancho_visual = contar_ancho_visual_utf8(actual->pais);
+        int padding = 34 - ancho_visual;
+        
+        if (padding < 0) padding = 1; 
+        printf("%-3d| %s", contador++, actual->pais); 
+
+        for (int i = 0; i < padding; i++) {
+            printf(" ");
+        }
+        
+        printf("| %-5d| %-5d\n", 
+               actual->aspecto1, 
+               actual->aspecto2); 
+               
         actual = actual->sigt;
     }
-    printf("--------------------------------------------\n");
 
+    printf("---------------------------------------------------\n");
     return 0;
 }
 
@@ -215,7 +255,7 @@ int main(){
     printf("--- Bienvenido a Pandemic ---\n");
     //colocacion_jugadores();
     struct Dlista* juego = crear_lista();
-    const char* archivo_paises = "Países de América Latina.txt";
+    const char* archivo_paises = "../Documentos/Países de América Latina.txt";
     crear_tablero(juego, archivo_paises);
     creacion_problematicas(juego);
     return 0;
