@@ -41,5 +41,5 @@
 </p
 
 <p align="center">
-  <img src="https://media1.tenor.com/m/YdeQixnd8MwAAAAd/matt-matt-drhs.gif" alt="Amogus GIF">
+  <img src="https://media1.tenor.com/m/Av5bbFzLM0EAAAAd/amogus-among-us.gif" alt="Amogus GIF">
 </p>
