@@ -41,5 +41,5 @@
 </p
 
 <p align="center">
-  <img src="https://c.tenor.com/YdeQixnd8MwAAAAd/tenor.gif" alt="Amogus GIF">
+  <img src="https://media1.tenor.com/YdeQixnd8MwAAAAd/tenor.gif" alt="Amogus GIF">
 </p>
