@@ -37,7 +37,7 @@
 </p>
 
 <p align="center">
-  <img "https://media1.tenor.com/m/5MuGtFXKiGMAAAAd/anime.gif" alt="Rika GIF">
+  <img src = "https://media1.tenor.com/m/5MuGtFXKiGMAAAAd/anime.gif" alt="Rika GIF">
 </p
 
 <p align="center">
