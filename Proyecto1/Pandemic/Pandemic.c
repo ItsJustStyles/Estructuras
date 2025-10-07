@@ -3,25 +3,6 @@
 #include <string.h> 
 #include <time.h>
 
-//Funcion para los jugadores
-struct jugadores{
-    char nombre[20];
-    char paisActual[25];
-};
-
-struct jugadores* crear_jugador(const char* nombre, const char* pais){
-    struct jugadores* jugador = calloc(1, sizeof(struct jugadores));
-    if(jugador == NULL){
-        return NULL;
-    }
-    strncpy(jugador -> nombre, nombre, 20);
-    jugador -> nombre[20] = '\0';
-
-    strncpy(jugador -> paisActual, pais, 25);
-    jugador -> paisActual[25] = '\0';
-    return jugador;
-}
-
 //Funciones para manejo de datos;
 
 //Lista doblemente enlazada:
@@ -83,6 +64,24 @@ int insertar_inicio(struct Dlista* lista, const char* NombrePais){
     }
     lista -> inicio = nn;
     return 0;
+}
+
+//Funcion para los jugadores
+struct jugadores{
+    char nombre[20];
+    struct Dnodo* paisActual;
+};
+
+struct jugadores* crear_jugador(const char* nombre, struct Dnodo* pais){
+    struct jugadores* jugador = calloc(1, sizeof(struct jugadores));
+    if(jugador == NULL){
+        return NULL;
+    }
+    strncpy(jugador -> nombre, nombre, 20);
+    jugador -> nombre[20] = '\0';
+
+    jugador -> paisActual = pais;
+    return jugador;
 }
 
 int contar_paises(const char* nombre_archivo){
@@ -191,6 +190,35 @@ int contar_ancho_visual_utf8(const char *s) {
     return ancho_visual;
 }
 
+void imprimir_paises(struct Dlista* listaPaises){
+    printf("\n--- PAÍSES Y PROBLEMÁTICAS ---\n");
+
+    printf("\n%-3s| %-35s| %-5s| %-5s\n", "#", "PAÍS", "A1", "A2");
+    printf("---------------------------------------------------\n"); 
+
+    struct Dnodo* actual = listaPaises->inicio;
+    int contador = 1;
+    
+   while (actual != NULL) {
+        int ancho_visual = contar_ancho_visual_utf8(actual->pais);
+        int padding = 34 - ancho_visual;
+        
+        if (padding < 0) padding = 1; 
+        printf("%-3d| %s", contador++, actual->pais); 
+
+        for (int i = 0; i < padding; i++) {
+            printf(" ");
+        }
+
+        printf("| %-5d| %-5d\n", 
+               actual->aspecto1, 
+               actual->aspecto2); 
+               
+        actual = actual->sigt;
+    }
+    printf("---------------------------------------------------\n");
+}
+
 int creacion_problematicas(struct Dlista* listaPaises){
     if (listaPaises == NULL || listaPaises->inicio == NULL){
         return -1;
@@ -217,38 +245,12 @@ int creacion_problematicas(struct Dlista* listaPaises){
         contador++;
     }
 
-    printf("\n--- PAÍSES Y PROBLEMÁTICAS ---\n");
-
-    printf("\n%-3s| %-35s| %-5s| %-5s\n", "#", "PAÍS", "A1", "A2");
-    printf("---------------------------------------------------\n"); 
-
-    actual = listaPaises->inicio;
-    contador = 1;
-    
-   while (actual != NULL) {
-        int ancho_visual = contar_ancho_visual_utf8(actual->pais);
-        int padding = 34 - ancho_visual;
-        
-        if (padding < 0) padding = 1; 
-        printf("%-3d| %s", contador++, actual->pais); 
-
-        for (int i = 0; i < padding; i++) {
-            printf(" ");
-        }
-
-        printf("| %-5d| %-5d\n", 
-               actual->aspecto1, 
-               actual->aspecto2); 
-               
-        actual = actual->sigt;
-    }
-
-    printf("---------------------------------------------------\n");
+    imprimir_paises(listaPaises);
     return 0;
 }
 
 int inicializar_jugadores(struct jugadores** jugador1, struct jugadores** jugador2, struct Dlista* listaPaises){
-    srand(time(NULL)); // La inicialización de rand() está bien aquí.
+    srand(time(NULL));
     struct Dnodo* actual = listaPaises -> inicio;
     char nombre[20];
     
@@ -264,7 +266,7 @@ int inicializar_jugadores(struct jugadores** jugador1, struct jugadores** jugado
         actual = actual -> sigt;
     }
 
-    *jugador1 = crear_jugador(nombre, actual -> pais); 
+    *jugador1 = crear_jugador(nombre, actual); 
 
     printf("Ingrese el nombre del jugador 2: ");
     scanf("%s", nombre);
@@ -275,11 +277,42 @@ int inicializar_jugadores(struct jugadores** jugador1, struct jugadores** jugado
         actual = actual -> sigt;
     }
 
-    *jugador2 = crear_jugador(nombre, actual -> pais);
+    *jugador2 = crear_jugador(nombre, actual);
     
     printf("\nBienvenidos jugadores %s y %s\n", (*jugador1)->nombre, (*jugador2)->nombre);
     
     return 0;
+}
+
+//Aqui van las accioness que podra hacer el jugador en el turno correspondiente:
+void turno_jugador(struct jugadores** jugador, struct Dlista* paises){
+    int accion;
+    int turnosRestantes = 4;
+    printf("\nTurno del jugador %s\n", (*jugador) -> nombre);
+    while(turnosRestantes){
+        printf("\nAcciones disponibles (Acciones restantes %d)\n", turnosRestantes);
+        printf("1. Desplazarse de un país a otro (Cuesta 1 acción)\n");
+        printf("2. Implementar Proyectos (Cuesta 1 acción)\n");
+        printf("3. Ver país en el que se encuentra (No cuesta acción)\n");
+        printf("4. Ver Estado del Tablero/Países (No cuesta acción)\n");
+
+        printf("\n¿Qué acción deseas hacer? ");
+        scanf("%d", &accion);
+
+        if(accion == 4){
+            imprimir_paises(paises);
+        }else if(accion == 3){
+            printf("\nUsted se encuentra en el país: %s\n", (*jugador) -> paisActual -> pais);
+        }else if(accion == 2){
+            turnosRestantes--;
+        }else if(accion == 1){
+            turnosRestantes--;
+        }else{
+            printf("\nNever gonna give you up\n");
+        }
+        //printf("Acción seleccionada: %d\n", accion);
+    }
+    return;
 }
 
 //Liberar memoria:
@@ -325,8 +358,21 @@ int main(){
 
     //Jugadores y su posicion en el mapa:
     printf("\n--- JUGADORES ---\n");
-    printf("\nEl jugador %s ha aparecido en el pais: %s\nEl jugador %s ha aparecido en el pais: %s\n", jugador1 -> nombre, jugador1 -> paisActual, jugador2 -> nombre, jugador2 -> paisActual);
+    printf("\nEl jugador %s ha aparecido en el pais: %s\nEl jugador %s ha aparecido en el pais: %s\n", jugador1 -> nombre, jugador1 -> paisActual -> pais, jugador2 -> nombre, jugador2 -> paisActual -> pais);
 
+    int turnoJugador = 0;
+    int jugadas = 3;
+    while(jugadas--){
+        if(turnoJugador == 0){
+            turno_jugador(&jugador1, juego);
+            turnoJugador = 1;
+        }else{
+            turno_jugador(&jugador2, juego);
+            turnoJugador = 0;
+        }
+    }
+    
+    printf("\nFin del juego xd\n");
     //Liberación de memoria:
     liberar_lista(juego);
     liberar_jugador(jugador1);
