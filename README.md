@@ -37,5 +37,9 @@
 </p>
 
 <p align="center">
+  <img https://media1.tenor.com/m/5MuGtFXKiGMAAAAd/anime.gif alt="Rika GIF">
+</p
+
+<p align="center">
   <img src="https://c.tenor.com/YdeQixnd8MwAAAAd/tenor.gif" alt="Amogus GIF">
 </p>
