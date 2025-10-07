@@ -36,8 +36,6 @@
   <img src="https://media1.tenor.com/m/EqFmLAryG_MAAAAd/%D0%B7%D0%B0%D0%B9%D1%87%D0%B8%D0%BA.gif" alt="Mai GIF">
 </p>
 
-<h1 align="center">Troll</h1>
-
 <p align="center">
   <img src="https://c.tenor.com/YdeQixnd8MwAAAAd/tenor.gif" alt="Amogus GIF">
 </p>
