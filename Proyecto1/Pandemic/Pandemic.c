@@ -202,11 +202,9 @@ int creacion_problematicas(struct Dlista* listaPaises){
         contador++;
     }
 
-        // 1. Imprimir encabezado de la tabla (con anchos fijos y limpios)
     printf("\n--- PAÍSES Y PROBLEMÁTICAS ---\n");
-    printf("\n");
-    // Formato: Contador (3) | País (30) | A1 (5) | A2 (5)
-    printf("%-3s| %-35s| %-5s| %-5s\n", "#", "PAÍS", "A1", "A2");
+
+    printf("\n%-3s| %-35s| %-5s| %-5s\n", "#", "PAÍS", "A1", "A2");
     printf("---------------------------------------------------\n"); 
 
     actual = listaPaises->inicio;
@@ -222,7 +220,7 @@ int creacion_problematicas(struct Dlista* listaPaises){
         for (int i = 0; i < padding; i++) {
             printf(" ");
         }
-        
+
         printf("| %-5d| %-5d\n", 
                actual->aspecto1, 
                actual->aspecto2); 
@@ -238,13 +236,13 @@ int colocacion_jugadores(){
     char jugador1[30];
     char jugador2[30];
 
-    printf("Ingrese el nombre del jugador 1: ");
+    printf("\nIngrese el nombre del jugador 1: ");
     scanf("%s", jugador1);
 
     printf("Ingrese el nombre del jugador 2: ");
     scanf("%s", jugador2);
 
-    printf("Bienvenidos jugadores %s y %s\n", jugador1, jugador2);
+    printf("\nBienvenidos jugadores %s y %s\n", jugador1, jugador2);
 
     //Falta la colocacion de los jugadores xd
     return 0;
@@ -253,7 +251,7 @@ int colocacion_jugadores(){
 //Función principal, aquí se ejecutara el juego:
 int main(){
     printf("--- Bienvenido a Pandemic ---\n");
-    //colocacion_jugadores();
+    colocacion_jugadores();
     struct Dlista* juego = crear_lista();
     const char* archivo_paises = "../Documentos/Países de América Latina.txt";
     crear_tablero(juego, archivo_paises);
