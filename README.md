@@ -39,5 +39,5 @@
 <h1 align="center">Troll</h1>
 
 <p align="center">
-  <img src="https://media1.tenor.com/m/YdeQixnd8MwAAAAd/matt-matt-drhs.gif" alt="Amogus GIF">
+  <img src="https://c.tenor.com/YdeQixnd8MwAAAAd/tenor.gif" alt="Amogus GIF">
 </p>
