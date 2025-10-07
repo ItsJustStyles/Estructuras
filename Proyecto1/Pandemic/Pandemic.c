@@ -3,6 +3,25 @@
 #include <string.h> 
 #include <time.h>
 
+//Funcion para los jugadores
+struct jugadores{
+    char nombre[20];
+    char paisActual[25];
+};
+
+struct jugadores* crear_jugador(const char* nombre, const char* pais){
+    struct jugadores* jugador = calloc(1, sizeof(struct jugadores));
+    if(jugador == NULL){
+        return NULL;
+    }
+    strncpy(jugador -> nombre, nombre, 20);
+    jugador -> nombre[20] = '\0';
+
+    strncpy(jugador -> paisActual, pais, 25);
+    jugador -> paisActual[25] = '\0';
+    return jugador;
+}
+
 //Funciones para manejo de datos;
 
 //Lista doblemente enlazada:
@@ -89,8 +108,6 @@ int contar_paises(const char* nombre_archivo){
     return contador;
 }
 
-
-
 int crear_tablero(struct Dlista* lista, const char* nombre_archivo){
     char linea[60];
     FILE *archivo = fopen(nombre_archivo, "r");
@@ -162,7 +179,6 @@ int crear_tablero(struct Dlista* lista, const char* nombre_archivo){
     return 0;
 }
 
-
 int contar_ancho_visual_utf8(const char *s) {
     int ancho_visual = 0;
     for (size_t i = 0; s[i] != '\0'; i++) {
@@ -174,7 +190,6 @@ int contar_ancho_visual_utf8(const char *s) {
     }
     return ancho_visual;
 }
-
 
 int creacion_problematicas(struct Dlista* listaPaises){
     if (listaPaises == NULL || listaPaises->inicio == NULL){
@@ -232,29 +247,89 @@ int creacion_problematicas(struct Dlista* listaPaises){
     return 0;
 }
 
-int colocacion_jugadores(){
-    char jugador1[30];
-    char jugador2[30];
+int inicializar_jugadores(struct jugadores** jugador1, struct jugadores** jugador2, struct Dlista* listaPaises){
+    srand(time(NULL)); // La inicialización de rand() está bien aquí.
+    struct Dnodo* actual = listaPaises -> inicio;
+    char nombre[20];
+    
+    int indice_aleatorio1 = rand() % 9; 
+    int indice_aleatorio2 = rand() % 9;
 
     printf("\nIngrese el nombre del jugador 1: ");
-    scanf("%s", jugador1);
+    scanf("%s", nombre);
+    
+    actual = listaPaises->inicio;
+    for(int i = 0; i < indice_aleatorio1; i++){
+        if (actual -> sigt == NULL) break; 
+        actual = actual -> sigt;
+    }
+
+    *jugador1 = crear_jugador(nombre, actual -> pais); 
 
     printf("Ingrese el nombre del jugador 2: ");
-    scanf("%s", jugador2);
+    scanf("%s", nombre);
 
-    printf("\nBienvenidos jugadores %s y %s\n", jugador1, jugador2);
+    actual = listaPaises->inicio;
+    for(int i = 0; i < indice_aleatorio2; i++){
+        if (actual -> sigt == NULL) break;
+        actual = actual -> sigt;
+    }
 
-    //Falta la colocacion de los jugadores xd
+    *jugador2 = crear_jugador(nombre, actual -> pais);
+    
+    printf("\nBienvenidos jugadores %s y %s\n", (*jugador1)->nombre, (*jugador2)->nombre);
+    
     return 0;
+}
+
+//Liberar memoria:
+void liberar_jugador(struct jugadores* jugador) {
+    if (jugador != NULL) {
+        free(jugador);
+    }
+}
+
+void liberar_lista(struct Dlista* lista) {
+    if (lista == NULL) {
+        return;
+    }
+
+    struct Dnodo* actual = lista->inicio;
+    struct Dnodo* siguiente = NULL;
+
+    while (actual != NULL) {
+        siguiente = actual->sigt;
+        free(actual);            
+        actual = siguiente;
+    }
+    
+    free(lista);
 }
 
 //Función principal, aquí se ejecutara el juego:
 int main(){
     printf("--- Bienvenido a Pandemic ---\n");
-    colocacion_jugadores();
+
+    //Insertar paises:
     struct Dlista* juego = crear_lista();
     const char* archivo_paises = "../Documentos/Países de América Latina.txt";
     crear_tablero(juego, archivo_paises);
+
+    //Crear jugadores:
+    struct jugadores* jugador1;
+    struct jugadores* jugador2;
+    inicializar_jugadores(&jugador1, &jugador2, juego);
+
+    //Crear problematicas del juego:
     creacion_problematicas(juego);
+
+    //Jugadores y su posicion en el mapa:
+    printf("\n--- JUGADORES ---\n");
+    printf("\nEl jugador %s ha aparecido en el pais: %s\nEl jugador %s ha aparecido en el pais: %s\n", jugador1 -> nombre, jugador1 -> paisActual, jugador2 -> nombre, jugador2 -> paisActual);
+
+    //Liberación de memoria:
+    liberar_lista(juego);
+    liberar_jugador(jugador1);
+    liberar_jugador(jugador2);
     return 0;
 }
