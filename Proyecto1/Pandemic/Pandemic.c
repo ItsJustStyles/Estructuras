@@ -66,6 +66,58 @@ int insertar_inicio(struct Dlista* lista, const char* NombrePais){
     return 0;
 }
 
+//Funcion para diccionarios o tablas hash (Aqui van los proyectos para imprementar)
+
+//Maicol, no se si esta vara funcione xd
+
+#define TAMANO_INICIAL = 13 //Primo para mejor rendimiento xd
+#define FACTOR_CARGA_MAXIMO 0.75 //El valor de carga para si se pasa redimencionar el diccionario xd
+
+struct tablaHash{
+    struct Dlista** buckets;
+    int tamano;
+    int cantidad_elementos;
+};
+
+unsigned int funcion_hash(const char* clave, int tamano){
+    unsigned int hash = 0;
+    for(int i = 0; clave[i] != '\0'; i++){
+        hash = hash * 31 + clave[i];
+    }
+    return hash % tamano;
+}
+
+struct tablaHash* crear_tabla_hash(){
+    struct tablaHash* tabla = calloc(1, sizeof(struct tablaHash));
+    if(tabla == NULL){
+        return NULL;
+    }
+    tabla -> buckets = calloc(TAMANO_INICIAL, sizeof(struct Dlista*));
+    if(tabla -> buckets == NULL){
+        free(tabla);
+        return NULL;
+    }
+
+    tabla -> tamano = TAMANO_INICIAL;
+    tabla -> cantidad_elementos = 0; //Por que cuando se crea no tiene nada adentro xd
+
+    for(int i = 0; i < tabla -> tamano; i++){
+        tabla -> buckets[i] = crear_lista();
+        if(tabla -> buckets[i] == NULL){
+            return tabla;
+        }
+    }
+    return tabla;
+}
+
+
+double calcular_factor_de_carga(const struct tablaHash* tabla){
+    if(tabla == NULL || tabla -> tamano == 0){
+        return 0.0;
+    }
+    return (double)tabla->cantidad_elementos / tabla -> tamano;
+}
+
 //Funcion para los jugadores
 struct jugadores{
     char nombre[20];
@@ -285,6 +337,16 @@ int inicializar_jugadores(struct jugadores** jugador1, struct jugadores** jugado
 }
 
 //Aqui van las accioness que podra hacer el jugador en el turno correspondiente:
+
+int desplazarse_pais(struct jugadores** jugador, struct Dlista* paises){
+    return 0;
+}
+
+int imprementar_proyecto(){
+    return 0;
+}
+
+//Creo que es void o lo es por el momento xd
 void turno_jugador(struct jugadores** jugador, struct Dlista* paises){
     int accion;
     int turnosRestantes = 4;
