@@ -43,5 +43,4 @@
 <p align="center">
   <img src="https://media1.tenor.com/m/Av5bbFzLM0EAAAAd/amogus-among-us.gif" alt="Amogus GIF">
 </p>
-<img width="480" height="270" alt="image" src="https://github.com/user-attachments/assets/ff2feea7-5b1e-4698-aca2-ce6b7908434f" />
 
