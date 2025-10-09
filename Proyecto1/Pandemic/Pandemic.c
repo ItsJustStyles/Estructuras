@@ -376,10 +376,6 @@ int desplazarse_pais(struct jugadores** jugador, struct Dlista* paises) {
 }
 
 
-int catastrofe_total(pais_actual, aspecto){
-    
-}
-//esta es la que va a sumar 1 a 3 paises aleatorios en alguno de los dos aspectos por turno(si no es asi luego usted me explica gay)
 int expandir_problematicas(struct Dlista* paises){
     srand(time(NULL));
     struct Dnodo* actual = paises -> inicio; 
@@ -390,23 +386,26 @@ int expandir_problematicas(struct Dlista* paises){
             if (actual -> sigt == NULL) break; 
             actual = actual -> sigt;
         }
-        int indice_aleatorio = rand() % 2;
-        switch (indice_aleatorio)
-        {
-        case 0:
-            if (actual->aspecto1=3){
-                
-                break;
-            }else{
-                actual->aspecto1+=1;
-                break;
+        int num_aspecto = rand() % 2;
+        //si num_aspecto=0, aspecto guarda la direccion de memoria de aspecto1, en los demas casos
+        //guarda la de aspecto2
+        int* aspecto = (num_aspecto == 0) ? &actual->aspecto1 : &actual->aspecto2;
+
+        if (*aspecto < 3) {
+            (*aspecto)++;
+        } else {
+            // Si ya está en 3, se propaga a los vecinos 
+            if (actual->ante != NULL) {
+                int* vecino_izq = (num_aspecto == 0) ? &actual->ante->aspecto1 : &actual->ante->aspecto2;
+                if (*vecino_izq < 3) (*vecino_izq)++;
             }
-            
-        
-        default:
-            break;
+            if (actual->sigt != NULL) {
+                int* vecino_der = (num_aspecto == 0) ? &actual->sigt->aspecto1 : &actual->sigt->aspecto2;
+                if (*vecino_der < 3) (*vecino_der)++;
+            }
         }
     }
+    return 0;
 }
 
 int imprementar_proyecto(){
@@ -444,7 +443,8 @@ void turno_jugador(struct jugadores** jugador, struct Dlista* paises){
             printf("\nNever gonna give you up\n");
         }
         //printf("Acción seleccionada: %d\n", accion);
-    }
+    } 
+    expandir_problematicas(paises);
     return;
 }
 
