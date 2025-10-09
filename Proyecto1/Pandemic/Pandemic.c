@@ -375,12 +375,44 @@ int desplazarse_pais(struct jugadores** jugador, struct Dlista* paises) {
     }
 }
 
+// Eliminar elemento
+int eliminar_paises(struct Dlista* paises){
+    if (paises == NULL || paises->inicio == NULL) 
+        return -1;
 
+    // eliminar nodos al inicio que coincidan
+    while (paises->inicio != NULL && (paises->inicio-> aspecto1 == 3 && paises->inicio-> aspecto2 == 3)) {
+        struct Dnodo* temp = paises->inicio;
+        paises->inicio = paises->inicio->sigt;
+        if (paises->inicio != NULL) {
+        paises->inicio->ante = NULL;
+    }
+        free(temp); //se libera la memoria del nodo
+    }// el while eliminara todos los nodos que hayan al inicio que contengan el valor buscado
+
+    struct Dnodo* actual = paises->inicio;
+    while (actual != NULL && actual->sigt != NULL) {
+        if (actual->sigt->aspecto1 == 3 && actual->sigt->aspecto2 == 3) {
+            struct Dnodo* temp = actual->sigt;
+            if (actual->sigt->sigt!=NULL){
+                actual->sigt->sigt->ante=actual;
+            }
+            actual->sigt = actual->sigt->sigt;
+            printf("\n %s, ha sido bombardeada por iran, f en el chat\n", temp->pais);
+            free(temp);
+            // Libera la memoria del nodo eliminado y conecta el nodo actual con el siguiente
+        } else {
+            actual = actual->sigt;
+            // Avanza al siguiente nodo si no se elimina ninguno
+        }
+    }
+
+    return 0;
+}
 int expandir_problematicas(struct Dlista* paises){
-    srand(time(NULL));
-    struct Dnodo* actual = paises -> inicio; 
     
     for(int i = 0; i < 3; i++){
+        struct Dnodo* actual = paises -> inicio; 
         int indice_aleatorio1 = rand() % 9; 
         for(int i = 0; i < indice_aleatorio1; i++){
             if (actual -> sigt == NULL) break; 
@@ -412,6 +444,9 @@ int expandir_problematicas(struct Dlista* paises){
     }
     return 0;
 }
+
+
+
 
 int imprementar_proyecto(){
     return 0;
@@ -479,6 +514,7 @@ void liberar_lista(struct Dlista* lista) {
 
 //Función principal, aquí se ejecutara el juego:
 int main(){
+    srand(time(NULL));
     printf("--- Bienvenido a Pandemic ---\n");
 
 
@@ -504,7 +540,7 @@ int main(){
     printf("\nEl jugador %s ha aparecido en el pais: %s\nEl jugador %s ha aparecido en el pais: %s\n", jugador1 -> nombre, jugador1 -> paisActual -> pais, jugador2 -> nombre, jugador2 -> paisActual -> pais);
 
     int turnoJugador = 0;
-    int jugadas = 3;
+    int jugadas = 5;
     while(jugadas--){
         if(turnoJugador == 0){
             turno_jugador(&jugador1, juego);
@@ -513,6 +549,7 @@ int main(){
             turno_jugador(&jugador2, juego);
             turnoJugador = 0;
         }
+        eliminar_paises(juego);
     }
     
     printf("\nFin del juego xd\n");
