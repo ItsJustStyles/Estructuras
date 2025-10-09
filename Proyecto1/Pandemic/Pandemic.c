@@ -70,7 +70,7 @@ int insertar_inicio(struct Dlista* lista, const char* NombrePais){
 
 //Maicol, no se si esta vara funcione xd
 
-#define TAMANO_INICIAL = 13 //Primo para mejor rendimiento xd
+#define TAMANO_INICIAL 13 //Primo para mejor rendimiento xd
 #define FACTOR_CARGA_MAXIMO 0.75 //El valor de carga para si se pasa redimencionar el diccionario xd
 
 struct tablaHash{
@@ -130,7 +130,7 @@ struct jugadores* crear_jugador(const char* nombre, struct Dnodo* pais){
         return NULL;
     }
     strncpy(jugador -> nombre, nombre, 20);
-    jugador -> nombre[20] = '\0';
+    jugador -> nombre[19] = '\0';
 
     jugador -> paisActual = pais;
     return jugador;
@@ -338,18 +338,86 @@ int inicializar_jugadores(struct jugadores** jugador1, struct jugadores** jugado
 
 //Aqui van las accioness que podra hacer el jugador en el turno correspondiente:
 
-int desplazarse_pais(struct jugadores** jugador, struct Dlista* paises){
-    return 0;
+int desplazarse_pais(struct jugadores** jugador, struct Dlista* paises) {
+    
+    struct Dnodo* actual = (*jugador)->paisActual;
+
+    int opcion;
+    printf("¿A dónde deseas moverte?\n");
+    printf("1. País siguiente (->)\n");
+    printf("2. País anterior (<-)\n");
+    printf("Opción: ");
+    scanf("%d", &opcion);
+    // Lo voy a dejar asi momentaneamente, hasta que usted me diga como se hace de verdad xd
+    switch (opcion) {
+        case 1:
+            if (actual->sigt != NULL) {
+                (*jugador)->paisActual = actual->sigt;
+                printf("Te has desplazado a: %s\n", (*jugador)->paisActual->pais);
+                return 1; // Movimiento realizado
+            } else {
+                printf("fin del camino papu\n");
+                return 0;
+            }
+
+        case 2:
+            if (actual->ante != NULL) {
+                (*jugador)->paisActual = actual->ante;
+                printf("Te has desplazado a: %s\n", (*jugador)->paisActual->pais);
+                return 1;// Movimiento realizado
+            } else {
+                printf("no hay terreno a la izquierda bro \n");
+                return 0;
+            }
+        default:
+            printf("Ete setch \n");
+            return 0;
+    }
+}
+
+
+int catastrofe_total(pais_actual, aspecto){
+    
+}
+//esta es la que va a sumar 1 a 3 paises aleatorios en alguno de los dos aspectos por turno(si no es asi luego usted me explica gay)
+int expandir_problematicas(struct Dlista* paises){
+    srand(time(NULL));
+    struct Dnodo* actual = paises -> inicio; 
+    
+    for(int i = 0; i < 3; i++){
+        int indice_aleatorio1 = rand() % 9; 
+        for(int i = 0; i < indice_aleatorio1; i++){
+            if (actual -> sigt == NULL) break; 
+            actual = actual -> sigt;
+        }
+        int indice_aleatorio = rand() % 2;
+        switch (indice_aleatorio)
+        {
+        case 0:
+            if (actual->aspecto1=3){
+                
+                break;
+            }else{
+                actual->aspecto1+=1;
+                break;
+            }
+            
+        
+        default:
+            break;
+        }
+    }
 }
 
 int imprementar_proyecto(){
     return 0;
 }
 
-//Creo que es void o lo es por el momento xd
+//Creo que es void o lo es por el momento xd (ok hijito)
 void turno_jugador(struct jugadores** jugador, struct Dlista* paises){
     int accion;
     int turnosRestantes = 4;
+
     printf("\nTurno del jugador %s\n", (*jugador) -> nombre);
     while(turnosRestantes){
         printf("\nAcciones disponibles (Acciones restantes %d)\n", turnosRestantes);
@@ -358,7 +426,7 @@ void turno_jugador(struct jugadores** jugador, struct Dlista* paises){
         printf("3. Ver país en el que se encuentra (No cuesta acción)\n");
         printf("4. Ver Estado del Tablero/Países (No cuesta acción)\n");
 
-        printf("\n¿Qué acción deseas hacer? ");
+        printf("\n¿Qué acción deseas hacer? \n");
         scanf("%d", &accion);
 
         if(accion == 4){
@@ -368,7 +436,10 @@ void turno_jugador(struct jugadores** jugador, struct Dlista* paises){
         }else if(accion == 2){
             turnosRestantes--;
         }else if(accion == 1){
-            turnosRestantes--;
+            int exito = desplazarse_pais(jugador, paises);
+            if (exito == 1) {
+                turnosRestantes--;
+            }
         }else{
             printf("\nNever gonna give you up\n");
         }
@@ -405,6 +476,12 @@ void liberar_lista(struct Dlista* lista) {
 int main(){
     printf("--- Bienvenido a Pandemic ---\n");
 
+
+    //hacer talvez un menu random, tipo jugar- instrucciones- datos de los creadores o algo asi, 
+    //no me haga caso, es solo talvez    
+    //int menu;
+    //scanf("%d", &menu);
+
     //Insertar paises:
     struct Dlista* juego = crear_lista();
     const char* archivo_paises = "../Documentos/Países de América Latina.txt";
@@ -415,7 +492,6 @@ int main(){
     struct jugadores* jugador2;
     inicializar_jugadores(&jugador1, &jugador2, juego);
 
-    //Crear problematicas del juego:
     creacion_problematicas(juego);
 
     //Jugadores y su posicion en el mapa:
