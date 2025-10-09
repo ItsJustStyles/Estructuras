@@ -15,8 +15,8 @@ struct Dnodo{
     int aspecto1;
     int aspecto2;
 
-    struct Dnodo* sigt; //Vecino1 del pais (Creo xd)
-    struct Dnodo* ante; //Vecino2 del pais (Creo xd)
+    struct Dnodo* sigt; //Vecino1 del pais (Creo xd)(sera?)
+    struct Dnodo* ante; //Vecino2 del pais (Creo xd)(sera?)
 };
 
 struct Dlista{
@@ -397,11 +397,16 @@ int expandir_problematicas(struct Dlista* paises){
             // Si ya está en 3, se propaga a los vecinos 
             if (actual->ante != NULL) {
                 int* vecino_izq = (num_aspecto == 0) ? &actual->ante->aspecto1 : &actual->ante->aspecto2;
-                if (*vecino_izq < 3) (*vecino_izq)++;
+                if (*vecino_izq < 3) {
+                    (*vecino_izq)++;
+                }
+                
             }
             if (actual->sigt != NULL) {
                 int* vecino_der = (num_aspecto == 0) ? &actual->sigt->aspecto1 : &actual->sigt->aspecto2;
-                if (*vecino_der < 3) (*vecino_der)++;
+                if (*vecino_der < 3) {
+                    (*vecino_der)++;
+            }
             }
         }
     }
