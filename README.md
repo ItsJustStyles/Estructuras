@@ -43,3 +43,6 @@
 <p align="center">
   <img src="https://media1.tenor.com/m/Av5bbFzLM0EAAAAd/amogus-among-us.gif" alt="Amogus GIF">
 </p>
+<p align="center">
+<img  src="https://github.com/user-attachments/assets/c9ed6449-43ee-4be5-8ab6-288a4cb830ae" alt="bro Gif">
+</p>
