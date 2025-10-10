@@ -28,6 +28,7 @@
   <img src="https://media1.tenor.com/m/61UNdw6fOYMAAAAC/mahiru.gif" alt="Mahiru GIF">
 </p>
 
+
 <p align="center">
   <img src="https://media1.tenor.com/m/WpZ9HVG_48IAAAAC/marin-kitagawa-sono-bisque-doll.gif" alt="Marin GIF">
 </p>
@@ -39,8 +40,14 @@
 <p align="center">
   <img src = "https://media1.tenor.com/m/5MuGtFXKiGMAAAAd/anime.gif" alt="Rika GIF">
 </p
+<p align="center">
+  <img src="https://media1.tenor.com/m/8CL78gdevkEAAAAC/chi.gif" alt="chill GIF">
+</p>
 
 <p align="center">
   <img src="https://media1.tenor.com/m/Av5bbFzLM0EAAAAd/amogus-among-us.gif" alt="Amogus GIF">
 </p>
+
+
+
 
