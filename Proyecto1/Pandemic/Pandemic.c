@@ -115,8 +115,9 @@ struct tablaHash* crear_tabla_hash(){
     return tabla;
 }
 
-double calcular_factor_de_carga(const struct tablaHash* tabla){
+double calcular_factor_de_carga(struct tablaHash* tabla){
     if(tabla == NULL || tabla -> tamano == 0){
+        tabla -> factorCargaActual = 0.0;
         return 0.0;
     }
     tabla -> factorCargaActual = (double)tabla->cantidad_elementos / tabla -> tamano;
@@ -424,7 +425,7 @@ int eliminar_paises(struct Dlista* paises){
                 actual->sigt->sigt->ante=actual;
             }
             actual->sigt = actual->sigt->sigt;
-            printf("\n %s, ha sido bombardeada por iran, f en el chat\n", temp->pais);
+            printf("\n %s, ha sido bombardeada por Iran, F en el chat\n", temp->pais);
             free(temp);
             // Libera la memoria del nodo eliminado y conecta el nodo actual con el siguiente
         } else {
@@ -435,11 +436,23 @@ int eliminar_paises(struct Dlista* paises){
 
     return 0;
 }
+
+#define MAX_CAMBIOS 10
+struct cambio{
+    char pais[25];
+    char aspecto[15];
+};
+
 //ya editada, se supone que lo hace con los vecinos del array, pero no lo he probado del todo, tal vez con unos prints luego
 int expandir_problematicas(struct Dlista* paises) {
     if (paises == NULL || paises->inicio == NULL)
         return -1;
 
+    srand(time(NULL));
+
+    struct cambio cambios[MAX_CAMBIOS];
+    int contador_cambios = 0;
+    
     for (int i = 0; i < 3; i++) {
         struct Dnodo* actual = paises->inicio;
         int indice_aleatorio1 = rand() % 9;
@@ -452,10 +465,17 @@ int expandir_problematicas(struct Dlista* paises) {
 
         int num_aspecto = rand() % 2;
         int* aspecto = (num_aspecto == 0) ? &actual->aspecto1 : &actual->aspecto2;
+        const char* nombre_aspecto = (num_aspecto == 0) ? "Aspecto 1" : "Aspecto 2";
 
-        
         if (*aspecto < 3) {
             (*aspecto)++;
+
+            if(contador_cambios < MAX_CAMBIOS){
+                strncpy(cambios[contador_cambios].pais, actual-> pais, 24);
+                strncpy(cambios[contador_cambios].aspecto, nombre_aspecto, 15);
+                contador_cambios++;
+            }
+
         } else {
             
             for (int v = 0; v < actual->cantidad_vecinos; v++) {
@@ -465,12 +485,33 @@ int expandir_problematicas(struct Dlista* paises) {
                 int* aspecto_vecino = (num_aspecto == 0) ? &vecino->aspecto1 : &vecino->aspecto2;
                 if (*aspecto_vecino < 3) {
                     (*aspecto_vecino)++;
+
+                    if (contador_cambios < MAX_CAMBIOS) {
+                        strncpy(cambios[contador_cambios].pais, vecino->pais, 24);
+                        strncpy(cambios[contador_cambios].aspecto, nombre_aspecto, 9);
+                        contador_cambios++;
                 }
             }
         }
     }
 
+    printf("\n=======================================================\n");
+    printf("        --- REPORTE DE EXPANSIÓN DE PROBLEMAS ---\n");
+    printf("=======================================================\n");
+    
+    if (contador_cambios == 0) {
+        printf("No hubo cambios en este turno.\n");
+    } else {
+        for (int k = 0; k < contador_cambios; k++) {
+            printf("⚠️ [%s] aumentó el %s\n", 
+                   cambios[k].pais, 
+                   cambios[k].aspecto);
+        }
+    }
+    printf("-------------------------------------------------------\n");
+
     return 0;
+    }
 }
 
 
@@ -490,6 +531,7 @@ int Generacion_vecinos(struct Dlista* paises){
 }
 
 // se que esta en ingles, no se me ocurria nada xd, a lo diego god
+// Eso fue chat no mienta
 struct Dnodo* random_country(struct Dlista* paises, struct Dnodo* excluido){
     if (paises == NULL || paises->inicio == NULL)
         return NULL;
@@ -608,7 +650,6 @@ void turno_jugador(struct jugadores** jugador, struct Dlista* paises){
         }
         //printf("Acción seleccionada: %d\n", accion);
     } 
-    expandir_problematicas(paises);
     return;
 }
 
@@ -665,17 +706,18 @@ int main(){
     printf("\nEl jugador %s ha aparecido en el pais: %s\nEl jugador %s ha aparecido en el pais: %s\n", jugador1 -> nombre, jugador1 -> paisActual -> pais, jugador2 -> nombre, jugador2 -> paisActual -> pais);
 
     int turnoJugador = 0;
-    int jugadas = 5;
+    int jugadas = 10;
     while(jugadas--){
         if(turnoJugador == 0){
             turno_jugador(&jugador1, juego);
             turnoJugador = 1;
-            mostrar_vecinos(juego);
+            //mostrar_vecinos(juego);
         }else{
             turno_jugador(&jugador2, juego);
             turnoJugador = 0;
-            mostrar_vecinos(juego);
+            //mostrar_vecinos(juego);
         }
+        expandir_problematicas(juego);
         eliminar_paises(juego);
 
     }
