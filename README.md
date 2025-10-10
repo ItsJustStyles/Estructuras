@@ -45,7 +45,7 @@
 </p>
 
 <p align="center">
-  <img src="https://media1.tenor.com/m/Av5bbFzLM0EAAAAd/amogus-among-us.gif" alt="Amogus GIF">
+  <img src="https://media.tenor.com/3X2mrP5sjv8AAAAi/bocchi-the-rock-bocchi.gif" alt="añañin gif">
 </p>
 
 
