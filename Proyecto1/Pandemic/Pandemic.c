@@ -17,11 +17,14 @@ struct Dnodo{
 
     struct Dnodo* sigt; //Vecino1 del pais (Creo xd)(sera?)
     struct Dnodo* ante; //Vecino2 del pais (Creo xd)(sera?)
+    struct Dnodo** vecinos;
+    int cantidad_vecinos;
 };
 
 struct Dlista{
     struct Dnodo* inicio;
 };
+
 
 struct Dlista* crear_lista(){
     struct Dlista* nueva_lista = calloc(1, sizeof(struct Dlista));
@@ -409,48 +412,146 @@ int eliminar_paises(struct Dlista* paises){
 
     return 0;
 }
-int expandir_problematicas(struct Dlista* paises){
-    
-    for(int i = 0; i < 3; i++){
-        struct Dnodo* actual = paises -> inicio; 
-        int indice_aleatorio1 = rand() % 9; 
-        for(int i = 0; i < indice_aleatorio1; i++){
-            if (actual -> sigt == NULL) break; 
-            actual = actual -> sigt;
+//ya editada, se supone que lo hace con los vecinos del array, pero no lo he probado del todo, tal vez con unos prints luego
+int expandir_problematicas(struct Dlista* paises) {
+    if (paises == NULL || paises->inicio == NULL)
+        return -1;
+
+    for (int i = 0; i < 3; i++) {
+        struct Dnodo* actual = paises->inicio;
+        int indice_aleatorio1 = rand() % 9;
+
+        
+        for (int j = 0; j < indice_aleatorio1; j++) {
+            if (actual->sigt == NULL) break;
+            actual = actual->sigt;
         }
+
         int num_aspecto = rand() % 2;
-        //si num_aspecto=0, aspecto guarda la direccion de memoria de aspecto1, en los demas casos
-        //guarda la de aspecto2
         int* aspecto = (num_aspecto == 0) ? &actual->aspecto1 : &actual->aspecto2;
 
+        
         if (*aspecto < 3) {
             (*aspecto)++;
         } else {
-            // Si ya está en 3, se propaga a los vecinos 
-            if (actual->ante != NULL) {
-                int* vecino_izq = (num_aspecto == 0) ? &actual->ante->aspecto1 : &actual->ante->aspecto2;
-                if (*vecino_izq < 3) {
-                    (*vecino_izq)++;
+            
+            for (int v = 0; v < actual->cantidad_vecinos; v++) {
+                struct Dnodo* vecino = actual->vecinos[v];
+                if (vecino == NULL) continue;
+
+                int* aspecto_vecino = (num_aspecto == 0) ? &vecino->aspecto1 : &vecino->aspecto2;
+                if (*aspecto_vecino < 3) {
+                    (*aspecto_vecino)++;
                 }
-                
-            }
-            if (actual->sigt != NULL) {
-                int* vecino_der = (num_aspecto == 0) ? &actual->sigt->aspecto1 : &actual->sigt->aspecto2;
-                if (*vecino_der < 3) {
-                    (*vecino_der)++;
-            }
             }
         }
     }
+
     return 0;
 }
 
 
+int Generacion_vecinos(struct Dlista* paises){
+    if (paises == NULL || paises->inicio == NULL) 
+        return -1;
 
+    struct Dnodo* actual = paises->inicio;
+
+    while (actual != NULL){
+        int cant_vecinos = rand() % 3 + 1; // entre 1 y 3 vecinos
+        actual->cantidad_vecinos = cant_vecinos;
+        actual->vecinos = calloc(cant_vecinos, sizeof(struct Dnodo*)); // reserva memoria
+        actual = actual->sigt;
+    }
+    return 0; 
+}
+
+// se que esta en ingles, no se me ocurria nada xd, a lo diego god
+struct Dnodo* random_country(struct Dlista* paises, struct Dnodo* excluido){
+    if (paises == NULL || paises->inicio == NULL)
+        return NULL;
+
+    
+    int total = 0;
+    struct Dnodo* actual = paises->inicio;
+    while (actual != NULL) {
+        total++;
+        actual = actual->sigt;
+    }
+
+    struct Dnodo* elegido = NULL;
+    do {
+        int indice = rand() % total;
+        actual = paises->inicio;
+        for (int i = 0; i < indice; i++) {
+            actual = actual->sigt;
+        }
+        elegido = actual;
+    } while (elegido == excluido); 
+
+    return elegido;
+}
+
+int asignar_vecinos(struct Dlista* paises){
+    if (paises == NULL || paises->inicio == NULL) 
+        return -1;
+
+    struct Dnodo* actual = paises->inicio;
+
+    while (actual != NULL){
+        for (int i = 0; i < actual->cantidad_vecinos; i++){
+            if (actual->vecinos[i] != NULL){
+                continue; 
+            } 
+                
+
+            struct Dnodo* candidato = random_country(paises, actual);
+            if (candidato == NULL) {
+                continue;
+            }
+
+            int repetido = 0;
+            for (int j = 0; j < actual->cantidad_vecinos; j++){
+                if (actual->vecinos[j] == candidato){
+                    repetido = 1;
+                    break;
+                }
+            }
+            if (repetido) {
+                continue;
+            }
+
+            actual->vecinos[i] = candidato;
+
+            
+            int bidireccion = 0;
+            for (int k = 0; k < candidato->cantidad_vecinos; k++){
+                if (candidato->vecinos[k] == actual){
+                    bidireccion = 1;
+                    break;
+                }
+            }
+
+            if (!bidireccion){
+                for (int k = 0; k < candidato->cantidad_vecinos; k++){
+                    if (candidato->vecinos[k] == NULL){
+                        candidato->vecinos[k] = actual;
+                        break;
+                    }
+                }
+            }
+        }
+
+        actual = actual->sigt;
+    }
+
+    return 0;
+}
 
 int imprementar_proyecto(){
     return 0;
 }
+
 
 //Creo que es void o lo es por el momento xd (ok hijito)
 void turno_jugador(struct jugadores** jugador, struct Dlista* paises){
@@ -534,7 +635,8 @@ int main(){
     inicializar_jugadores(&jugador1, &jugador2, juego);
 
     creacion_problematicas(juego);
-
+    Generacion_vecinos(juego);
+    asignar_vecinos(juego);
     //Jugadores y su posicion en el mapa:
     printf("\n--- JUGADORES ---\n");
     printf("\nEl jugador %s ha aparecido en el pais: %s\nEl jugador %s ha aparecido en el pais: %s\n", jugador1 -> nombre, jugador1 -> paisActual -> pais, jugador2 -> nombre, jugador2 -> paisActual -> pais);
@@ -545,11 +647,14 @@ int main(){
         if(turnoJugador == 0){
             turno_jugador(&jugador1, juego);
             turnoJugador = 1;
+            mostrar_vecinos(juego);
         }else{
             turno_jugador(&jugador2, juego);
             turnoJugador = 0;
+            mostrar_vecinos(juego);
         }
         eliminar_paises(juego);
+
     }
     
     printf("\nFin del juego xd\n");
