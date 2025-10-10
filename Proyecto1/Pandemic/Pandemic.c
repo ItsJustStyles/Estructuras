@@ -80,6 +80,7 @@ struct tablaHash{
     struct Dlista** buckets;
     int tamano;
     int cantidad_elementos;
+    double factorCargaActual;
 };
 
 unsigned int funcion_hash(const char* clave, int tamano){
@@ -103,6 +104,7 @@ struct tablaHash* crear_tabla_hash(){
 
     tabla -> tamano = TAMANO_INICIAL;
     tabla -> cantidad_elementos = 0; //Por que cuando se crea no tiene nada adentro xd
+    tabla -> factorCargaActual = 0;
 
     for(int i = 0; i < tabla -> tamano; i++){
         tabla -> buckets[i] = crear_lista();
@@ -113,12 +115,33 @@ struct tablaHash* crear_tabla_hash(){
     return tabla;
 }
 
-
 double calcular_factor_de_carga(const struct tablaHash* tabla){
     if(tabla == NULL || tabla -> tamano == 0){
         return 0.0;
     }
-    return (double)tabla->cantidad_elementos / tabla -> tamano;
+    tabla -> factorCargaActual = (double)tabla->cantidad_elementos / tabla -> tamano;
+    return tabla -> factorCargaActual;
+}
+
+int insertar_en_tabla(struct tablaHash* tabla, const char* clave){
+    if(tabla == NULL || clave == NULL){
+        return -1;
+    }
+
+    int indice = funcion_hash(clave, tabla->tamano);
+
+    if(insertar_inicio(tabla->buckets[indice], clave) != 0){
+        return -1;
+    }
+
+    tabla -> cantidad_elementos++;
+
+    if(calcular_factor_de_carga(tabla) > FACTOR_CARGA_MAXIMO){
+        //Aquí se debería redimencionar xd, confío en que no se deba hacer
+       return -1; 
+    }
+
+    return 0;
 }
 
 //Funcion para los jugadores
