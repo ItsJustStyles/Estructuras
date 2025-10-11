@@ -418,42 +418,47 @@ int inicializar_jugadores(struct jugadores** jugador1, struct jugadores** jugado
 }
 
 //Aqui van las accioness que podra hacer el jugador en el turno correspondiente:
-int desplazarse_pais(struct jugadores** jugador, struct Dlista* paises) {
-    
+int desplazarse_pais(struct jugadores** jugador) {
     struct Dnodo* actual = (*jugador)->paisActual;
 
-    int opcion;
-    printf("\n¿A dónde deseas moverte?\n");
-    printf("1. País siguiente (->)\n");
-    printf("2. País anterior (<-)\n");
-    printf("Opción: ");
-    scanf("%d", &opcion);
-    // Lo voy a dejar asi momentaneamente, hasta que usted me diga como se hace de verdad xd
-    switch (opcion) {
-        case 1:
-            if (actual->sigt != NULL) {
-                (*jugador)->paisActual = actual->sigt;
-                printf("Te has desplazado a: %s\n", (*jugador)->paisActual->pais);
-                return 1; // Movimiento realizado
-            } else {
-                printf("fin del camino papu\n");
-                return 0;
-            }
-
-        case 2:
-            if (actual->ante != NULL) {
-                (*jugador)->paisActual = actual->ante;
-                printf("Te has desplazado a: %s\n", (*jugador)->paisActual->pais);
-                return 1;// Movimiento realizado
-            } else {
-                printf("no hay terreno a la izquierda bro \n");
-                return 0;
-            }
-        default:
-            printf("Ete setch \n");
-            return 0;
+    if (actual->cantidad_vecinos == 0) {
+        printf("bro, que paso, no hay vecinos, error\n");
+        return 0;
     }
+
+    printf("\n--- Los amigos del tilin (Vecinos) ---\n");
+    for (int i = 0; i < actual->cantidad_vecinos; i++) {
+        struct Dnodo* vecino = actual->vecinos[i];
+        if (vecino != NULL) {
+            printf("%d. %s (Aspecto 1: %d, Aspecto 2: %d)\n",
+                   i + 1, vecino->pais, vecino->aspecto1, vecino->aspecto2);
+        }
+    }
+
+    int opcion;
+    printf("Elige el destino, evita peru \n");
+
+    
+    if (scanf("%d", &opcion) != 1) {
+        printf("Sea serio\n");
+        while (getchar() != '\n'); 
+        return 0;
+    }
+    
+    while (getchar() != '\n');
+
+    
+    if (opcion < 1 || opcion > actual->cantidad_vecinos || actual->vecinos[opcion - 1] == NULL) {
+        printf("elije bien bro\n");
+        return 0;
+    }
+
+    (*jugador)->paisActual = actual->vecinos[opcion - 1];
+    printf("Felicidades, evitaste bolivia, fuiste a: %s\n", (*jugador)->paisActual->pais);
+    return 1;
 }
+
+
 
 int escoger_proyecto(struct ProyectosHash* proyectos, const char* nombreProyecto){
     char implementacion[5];
@@ -780,15 +785,10 @@ void turno_jugador(struct jugadores** jugador, struct Dlista* paises, struct Pro
                 turnosRestantes--;
             }
         }else if(accion == 1){
-            int paisDesplazar;
-            printf("\n--- Paises disponibles para desplazarte ---\n\n");
-            mostrar_vecinos_pais(paises -> inicio, (*jugador) -> paisActual -> pais);
-            printf("\nElige al país que deseas desplazarte (por número): ");
-            scanf("%d", &paisDesplazar);
-            int exito = desplazarse_pais(jugador, paises);
-            if (exito == 1) {
-                turnosRestantes--;
-            }
+    int exito = desplazarse_pais(jugador);
+    if (exito == 1) {
+        turnosRestantes--;
+    }
         }else{
             printf("\nNever gonna give you up\n");
         }
