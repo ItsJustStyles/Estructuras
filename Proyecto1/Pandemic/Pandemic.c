@@ -73,17 +73,42 @@ int insertar_inicio(struct Dlista* lista, const char* NombrePais){
 
 //Maicol, no se si esta vara funcione xd
 
-#define TAMANO_INICIAL 13 //Primo para mejor rendimiento xd
+#define TAMANO_INICIAL_PROYECTOS 13 //Primo para mejor rendimiento xd
 #define FACTOR_CARGA_MAXIMO 0.75 //El valor de carga para si se pasa redimencionar el diccionario xd
+#define MAX_NOMBRE_PROYECTO 50
+#define MAX_DESCRIPCION 256
+#define MAX_BIBLIOGRAFIA 100
+#define MAX_PAISES_APLICADOS 100
 
-struct tablaHash{
-    struct Dlista** buckets;
-    int tamano;
-    int cantidad_elementos;
-    double factorCargaActual;
+struct Pnodo{
+    char nombre[MAX_NOMBRE_PROYECTO];
+    char descripcion[MAX_DESCRIPCION];
+    char bibliografia[MAX_BIBLIOGRAFIA];
+
+    struct Pnodo* sigt;
 };
 
-unsigned int funcion_hash(const char* clave, int tamano){
+struct Plista{
+    struct Pnodo* inicio;
+};
+
+struct ProyectosHash{
+    struct Plista** buckets;
+    int tamano;
+    int cantidad_elementos;
+    double factorDecarga;
+};
+
+struct Plista* crear_lista_proyecto(){
+    struct Plista* nueva_lista = calloc(1, sizeof(struct Plista));
+    if(nueva_lista == NULL){
+        return NULL;
+    }
+    nueva_lista -> inicio = NULL;
+    return nueva_lista;
+}
+
+unsigned int funcion_hash_proyecto(const char* clave, int tamano){
     unsigned int hash = 0;
     for(int i = 0; clave[i] != '\0'; i++){
         hash = hash * 31 + clave[i];
@@ -91,58 +116,89 @@ unsigned int funcion_hash(const char* clave, int tamano){
     return hash % tamano;
 }
 
-struct tablaHash* crear_tabla_hash(){
-    struct tablaHash* tabla = calloc(1, sizeof(struct tablaHash));
-    if(tabla == NULL){
-        return NULL;
+double calcular_factor_carga_proyecto(struct ProyectosHash* tabla){
+    if (tabla == NULL || tabla->tamano == 0) {
+        tabla -> factorDecarga  = 0.0;
+        return 0.0;
     }
-    tabla -> buckets = calloc(TAMANO_INICIAL, sizeof(struct Dlista*));
-    if(tabla -> buckets == NULL){
+    tabla -> factorDecarga = (double)tabla->cantidad_elementos / tabla->tamano;;
+    return tabla -> factorDecarga;
+}
+
+struct ProyectosHash* crear_tabla_hash_proyectos(){
+    struct ProyectosHash* tabla = calloc(1, sizeof(struct ProyectosHash));
+    if(tabla == NULL) return NULL;
+
+    tabla -> buckets = calloc(TAMANO_INICIAL_PROYECTOS, sizeof(struct Plista*));
+    if(tabla->buckets == NULL){
         free(tabla);
         return NULL;
     }
 
-    tabla -> tamano = TAMANO_INICIAL;
-    tabla -> cantidad_elementos = 0; //Por que cuando se crea no tiene nada adentro xd
-    tabla -> factorCargaActual = 0;
+    tabla -> tamano = TAMANO_INICIAL_PROYECTOS;
+    tabla -> cantidad_elementos = 0;
+    tabla -> factorDecarga = 0.0;
 
-    for(int i = 0; i < tabla -> tamano; i++){
-        tabla -> buckets[i] = crear_lista();
-        if(tabla -> buckets[i] == NULL){
-            return tabla;
+    for (int i = 0; i < tabla->tamano; i++) {
+        tabla->buckets[i] = crear_lista_proyecto();
+        if (tabla->buckets[i] == NULL) {
+            return tabla; 
         }
     }
+
     return tabla;
 }
 
-double calcular_factor_de_carga(struct tablaHash* tabla){
-    if(tabla == NULL || tabla -> tamano == 0){
-        tabla -> factorCargaActual = 0.0;
-        return 0.0;
-    }
-    tabla -> factorCargaActual = (double)tabla->cantidad_elementos / tabla -> tamano;
-    return tabla -> factorCargaActual;
+struct Pnodo* crear_nodo_proyecto(const char* nombre, const char* desc, const char* biblio) {
+    struct Pnodo* nuevo_nodo = calloc(1, sizeof(struct Pnodo));
+    if(nuevo_nodo == NULL) return NULL;
+
+    strncpy(nuevo_nodo->nombre, nombre, MAX_NOMBRE_PROYECTO - 1);
+    strncpy(nuevo_nodo->descripcion, desc, MAX_DESCRIPCION - 1);
+    strncpy(nuevo_nodo->bibliografia, biblio, MAX_BIBLIOGRAFIA - 1);
+    
+    nuevo_nodo->sigt = NULL;
+    return nuevo_nodo;
 }
 
-int insertar_en_tabla(struct tablaHash* tabla, const char* clave){
-    if(tabla == NULL || clave == NULL){
+int insertar_proyecto_hash(struct ProyectosHash* tabla, struct Pnodo* nuevo_nodo) {
+    if (tabla == NULL || nuevo_nodo == NULL) return -1;
+
+    // 1. Obtener el índice
+    unsigned int indice = funcion_hash_proyecto(nuevo_nodo->nombre, tabla->tamano);
+    
+    // 2. Insertar al inicio del bucket (Simple Chaining)
+    nuevo_nodo->sigt = tabla->buckets[indice]->inicio;
+    tabla->buckets[indice]->inicio = nuevo_nodo;
+    
+    // 3. Incrementar el contador
+    tabla->cantidad_elementos++; 
+
+    // 4. Revisar Factor de Carga y redimensionar
+    if (calcular_factor_carga_proyecto(tabla) > FACTOR_CARGA_MAXIMO) {
         return -1;
-    }
-
-    int indice = funcion_hash(clave, tabla->tamano);
-
-    if(insertar_inicio(tabla->buckets[indice], clave) != 0){
-        return -1;
-    }
-
-    tabla -> cantidad_elementos++;
-
-    if(calcular_factor_de_carga(tabla) > FACTOR_CARGA_MAXIMO){
-        //Aquí se debería redimencionar xd, confío en que no se deba hacer
-       return -1; 
     }
 
     return 0;
+}
+
+struct Pnodo* buscar_proyecto_hash(struct ProyectosHash* tabla, const char* nombre_proyecto) {
+    if (tabla == NULL || nombre_proyecto == NULL) return NULL;
+
+    // 1. Calcular el índice
+    unsigned int indice = funcion_hash_proyecto(nombre_proyecto, tabla->tamano);
+    
+    // 2. Recorrer la lista (manejar colisiones)
+    struct Pnodo* actual = tabla->buckets[indice]->inicio;
+
+    while (actual != NULL) {
+        if (strcmp(actual->nombre, nombre_proyecto) == 0) {
+            return actual; // ¡Encontrado!
+        }
+        actual = actual->sigt;
+    }
+    
+    return NULL; // Proyecto no encontrado
 }
 
 //Funcion para los jugadores
@@ -494,7 +550,7 @@ int expandir_problematicas(struct Dlista* paises) {
             }
         }
     }
-
+    }
     printf("\n=======================================================\n");
     printf("        --- REPORTE DE EXPANSIÓN DE PROBLEMAS ---\n");
     printf("=======================================================\n");
@@ -509,9 +565,7 @@ int expandir_problematicas(struct Dlista* paises) {
         }
     }
     printf("-------------------------------------------------------\n");
-
     return 0;
-    }
 }
 
 
@@ -613,13 +667,52 @@ int asignar_vecinos(struct Dlista* paises){
     return 0;
 }
 
-int imprementar_proyecto(){
+int escoger_proyecto(struct ProyectosHash* proyectos, const char* nombreProyecto){
+    char implementacion[5];
+    struct Pnodo* encontrado = buscar_proyecto_hash(proyectos, nombreProyecto);
+
+    if (encontrado != NULL) {
+        printf("\nProyecto Encontrado: %s\n", encontrado->nombre);
+        printf("  - Descripcion: %s\n", encontrado->descripcion);
+        printf("  - Bibliografía: %s\n", encontrado->bibliografia);
+    } else {
+        printf("\nProyecto '%s' no encontrado.\n", nombreProyecto);
+        return -1;
+    }
+
+    printf("\n¿Desea implementar el proyecto? (Si o no) ");
+    if (scanf("%4s", implementacion) != 1) { 
+        return -1; 
+    }
+    if(strcasecmp(implementacion, "si") == 0){
+        return 1;
+    }
+    return -1;
+}
+
+int imprementar_proyecto(struct ProyectosHash* proyectos){
+    int numProyecto;
+    printf("\n --- PROYECTOS DISPONIBLES ---\n\n");
+    printf("1. Bombardeen Perú\n");
+
+    printf("\n¿Qué proyecto desea implementar: ");
+    scanf("%d", &numProyecto);
+    if(numProyecto == 1){
+        if(escoger_proyecto(proyectos, "Bombardeen Perú") == 1){
+            printf("\nImprementando proyecto\n");
+        }else{
+            return -1;
+        }
+    }else{
+        printf("\nBomboclat\n");
+        return -1;
+    }
     return 0;
 }
 
 
 //Creo que es void o lo es por el momento xd (ok hijito)
-void turno_jugador(struct jugadores** jugador, struct Dlista* paises){
+void turno_jugador(struct jugadores** jugador, struct Dlista* paises, struct ProyectosHash* proyectos){
     int accion;
     int turnosRestantes = 4;
 
@@ -639,7 +732,10 @@ void turno_jugador(struct jugadores** jugador, struct Dlista* paises){
         }else if(accion == 3){
             printf("\nUsted se encuentra en el país: %s\n", (*jugador) -> paisActual -> pais);
         }else if(accion == 2){
-            turnosRestantes--;
+            if(imprementar_proyecto(proyectos) == 0){
+                //Falta que se baje el aspecto del pais en el que se encuentra
+                turnosRestantes--;
+            }
         }else if(accion == 1){
             int exito = desplazarse_pais(jugador, paises);
             if (exito == 1) {
@@ -677,6 +773,29 @@ void liberar_lista(struct Dlista* lista) {
     free(lista);
 }
 
+void liberar_lista_proyecto(struct Plista* lista) {
+    if (lista == NULL) return;
+    struct Pnodo* actual = lista->inicio;
+    struct Pnodo* temp;
+    while (actual != NULL) {
+        temp = actual;
+        actual = actual->sigt;
+        free(temp);
+    }
+    free(lista);
+}
+
+void liberar_tabla_hash_proyectos(struct ProyectosHash* tabla) {
+    if (tabla == NULL) return;
+    
+    for (int i = 0; i < tabla->tamano; i++) {
+        liberar_lista_proyecto(tabla->buckets[i]); 
+    }
+    
+    free(tabla->buckets);
+    free(tabla);
+}
+
 //Función principal, aquí se ejecutara el juego:
 int main(){
     srand(time(NULL));
@@ -692,6 +811,18 @@ int main(){
     struct Dlista* juego = crear_lista();
     const char* archivo_paises = "../Documentos/Países de América Latina.txt";
     crear_tablero(juego, archivo_paises);
+
+    //Crear proyectos por problematicas (Tabla de dispersión):
+
+    //Paso 1: Creación de la tabla
+    struct ProyectosHash* proyectos = crear_tabla_hash_proyectos();
+
+    //Paso 2: Creación e inserción de nodos de proyecto:
+    //La estructura es: nombre del proyecto, descripcion, bibliografia
+    struct Pnodo* p1 = crear_nodo_proyecto("Bombardeen Perú", "La propuesta consiste en mandar ojivas hacia Perú con el fin de destruirlo", "Maicol, racista ese xd");
+    
+    //Se inserta
+    insertar_proyecto_hash(proyectos, p1);
 
     //Crear jugadores:
     struct jugadores* jugador1;
@@ -709,11 +840,11 @@ int main(){
     int jugadas = 10;
     while(jugadas--){
         if(turnoJugador == 0){
-            turno_jugador(&jugador1, juego);
+            turno_jugador(&jugador1, juego, proyectos);
             turnoJugador = 1;
             //mostrar_vecinos(juego);
         }else{
-            turno_jugador(&jugador2, juego);
+            turno_jugador(&jugador2, juego, proyectos);
             turnoJugador = 0;
             //mostrar_vecinos(juego);
         }
@@ -724,6 +855,7 @@ int main(){
     
     printf("\nFin del juego xd\n");
     //Liberación de memoria:
+    liberar_tabla_hash_proyectos(proyectos);
     liberar_lista(juego);
     liberar_jugador(jugador1);
     liberar_jugador(jugador2);
