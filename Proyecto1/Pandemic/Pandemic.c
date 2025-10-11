@@ -281,7 +281,6 @@ int crear_tablero(struct Dlista* lista, const char* nombre_archivo){
     }
     //Cerrar el archivo
     fclose(archivo);
-    srand(time(NULL));
     int contador = 0;
     while(contador < 9){
         int indice_aleatorio = rand() % total_paises;
@@ -385,7 +384,6 @@ int creacion_problematicas(struct Dlista* listaPaises){
 }
 
 int inicializar_jugadores(struct jugadores** jugador1, struct jugadores** jugador2, struct Dlista* listaPaises){
-    srand(time(NULL));
     struct Dnodo* actual = listaPaises -> inicio;
     char nombre[20];
     
@@ -420,13 +418,12 @@ int inicializar_jugadores(struct jugadores** jugador1, struct jugadores** jugado
 }
 
 //Aqui van las accioness que podra hacer el jugador en el turno correspondiente:
-
 int desplazarse_pais(struct jugadores** jugador, struct Dlista* paises) {
     
     struct Dnodo* actual = (*jugador)->paisActual;
 
     int opcion;
-    printf("¿A dónde deseas moverte?\n");
+    printf("\n¿A dónde deseas moverte?\n");
     printf("1. País siguiente (->)\n");
     printf("2. País anterior (<-)\n");
     printf("Opción: ");
@@ -456,6 +453,49 @@ int desplazarse_pais(struct jugadores** jugador, struct Dlista* paises) {
             printf("Ete setch \n");
             return 0;
     }
+}
+
+int escoger_proyecto(struct ProyectosHash* proyectos, const char* nombreProyecto){
+    char implementacion[5];
+    struct Pnodo* encontrado = buscar_proyecto_hash(proyectos, nombreProyecto);
+
+    if (encontrado != NULL) {
+        printf("\nProyecto Encontrado: %s\n", encontrado->nombre);
+        printf("  - Descripcion: %s\n", encontrado->descripcion);
+        printf("  - Bibliografía: %s\n", encontrado->bibliografia);
+    } else {
+        printf("\nProyecto '%s' no encontrado.\n", nombreProyecto);
+        return -1;
+    }
+
+    printf("\n¿Desea implementar el proyecto? (Si o no) ");
+    if (scanf("%4s", implementacion) != 1) { 
+        return -1; 
+    }
+    if(strcasecmp(implementacion, "si") == 0){
+        return 1;
+    }
+    return -1;
+}
+
+int imprementar_proyecto(struct ProyectosHash* proyectos){
+    int numProyecto;
+    printf("\n --- PROYECTOS DISPONIBLES ---\n\n");
+    printf("1. Bombardeen Perú\n");
+
+    printf("\n¿Qué proyecto desea implementar: ");
+    scanf("%d", &numProyecto);
+    if(numProyecto == 1){
+        if(escoger_proyecto(proyectos, "Bombardeen Perú") == 1){
+            printf("\nImprementando proyecto\n");
+        }else{
+            return -1;
+        }
+    }else{
+        printf("\nBomboclat\n");
+        return -1;
+    }
+    return 0;
 }
 
 // Eliminar elemento
@@ -503,8 +543,6 @@ struct cambio{
 int expandir_problematicas(struct Dlista* paises) {
     if (paises == NULL || paises->inicio == NULL)
         return -1;
-
-    srand(time(NULL));
 
     struct cambio cambios[MAX_CAMBIOS];
     int contador_cambios = 0;
@@ -590,7 +628,6 @@ struct Dnodo* random_country(struct Dlista* paises, struct Dnodo* excluido){
     if (paises == NULL || paises->inicio == NULL)
         return NULL;
 
-    
     int total = 0;
     struct Dnodo* actual = paises->inicio;
     while (actual != NULL) {
@@ -667,49 +704,55 @@ int asignar_vecinos(struct Dlista* paises){
     return 0;
 }
 
-int escoger_proyecto(struct ProyectosHash* proyectos, const char* nombreProyecto){
-    char implementacion[5];
-    struct Pnodo* encontrado = buscar_proyecto_hash(proyectos, nombreProyecto);
-
-    if (encontrado != NULL) {
-        printf("\nProyecto Encontrado: %s\n", encontrado->nombre);
-        printf("  - Descripcion: %s\n", encontrado->descripcion);
-        printf("  - Bibliografía: %s\n", encontrado->bibliografia);
-    } else {
-        printf("\nProyecto '%s' no encontrado.\n", nombreProyecto);
-        return -1;
+void mostrar_vecinos_pais(struct Dnodo* inicio_lista, const char* nombre_pais_central) {
+    if (inicio_lista == NULL || nombre_pais_central == NULL) {
+        printf("Error: La lista de países no ha sido inicializada.\n");
+        return;
     }
 
-    printf("\n¿Desea implementar el proyecto? (Si o no) ");
-    if (scanf("%4s", implementacion) != 1) { 
-        return -1; 
-    }
-    if(strcasecmp(implementacion, "si") == 0){
-        return 1;
-    }
-    return -1;
-}
+    // 1. Buscar el país central recorriendo la lista (O(N) - Búsqueda Lenta)
+    struct Dnodo* pais_central = NULL;
+    struct Dnodo* actual = inicio_lista;
 
-int imprementar_proyecto(struct ProyectosHash* proyectos){
-    int numProyecto;
-    printf("\n --- PROYECTOS DISPONIBLES ---\n\n");
-    printf("1. Bombardeen Perú\n");
-
-    printf("\n¿Qué proyecto desea implementar: ");
-    scanf("%d", &numProyecto);
-    if(numProyecto == 1){
-        if(escoger_proyecto(proyectos, "Bombardeen Perú") == 1){
-            printf("\nImprementando proyecto\n");
-        }else{
-            return -1;
+    while (actual != NULL) {
+        // Usamos strcmp para comparar cadenas de caracteres (pais)
+        if (strcmp(actual->pais, nombre_pais_central) == 0) {
+            pais_central = actual; 
+            break;
         }
-    }else{
-        printf("\nBomboclat\n");
-        return -1;
+        // Avanzamos al siguiente nodo en la lista
+        actual = actual->sigt; 
     }
-    return 0;
-}
 
+    if (pais_central == NULL) {
+        printf("Error: El país '%s' no se encuentra en el tablero.\n", nombre_pais_central);
+        return;
+    }
+
+    // 2. Imprimir encabezado
+
+    // 3. Iterar sobre el array de vecinos del nodo encontrado
+    int vecinos_encontrados = 0;
+    int paisIndice = 1;
+    
+    // El bucle recorre la capacidad máxima del array de vecinos
+    for (int i = 0; i < pais_central->cantidad_vecinos; i++) {
+        struct Dnodo* vecino = pais_central->vecinos[i];
+        
+        // Solo mostramos si el puntero no es NULL (es una conexión activa)
+        if (vecino != NULL) {
+            printf("  %d.  %s (Aspecto 1: %d, Aspecto 2: %d)\n", 
+                   paisIndice,vecino->pais, vecino->aspecto1, vecino->aspecto2);
+            vecinos_encontrados++;
+            paisIndice++;
+        }
+    }
+    
+    if (vecinos_encontrados == 0) {
+        printf("Este país aún no tiene vecinos asignados.\n");
+    }
+    //printf("------------------------------------------------\n");
+}
 
 //Creo que es void o lo es por el momento xd (ok hijito)
 void turno_jugador(struct jugadores** jugador, struct Dlista* paises, struct ProyectosHash* proyectos){
@@ -724,7 +767,7 @@ void turno_jugador(struct jugadores** jugador, struct Dlista* paises, struct Pro
         printf("3. Ver país en el que se encuentra (No cuesta acción)\n");
         printf("4. Ver Estado del Tablero/Países (No cuesta acción)\n");
 
-        printf("\n¿Qué acción deseas hacer? \n");
+        printf("\n¿Qué acción deseas hacer? ");
         scanf("%d", &accion);
 
         if(accion == 4){
@@ -737,6 +780,11 @@ void turno_jugador(struct jugadores** jugador, struct Dlista* paises, struct Pro
                 turnosRestantes--;
             }
         }else if(accion == 1){
+            int paisDesplazar;
+            printf("\n--- Paises disponibles para desplazarte ---\n\n");
+            mostrar_vecinos_pais(paises -> inicio, (*jugador) -> paisActual -> pais);
+            printf("\nElige al país que deseas desplazarte (por número): ");
+            scanf("%d", &paisDesplazar);
             int exito = desplazarse_pais(jugador, paises);
             if (exito == 1) {
                 turnosRestantes--;
@@ -835,7 +883,6 @@ int main(){
     //Jugadores y su posicion en el mapa:
     printf("\n--- JUGADORES ---\n");
     printf("\nEl jugador %s ha aparecido en el pais: %s\nEl jugador %s ha aparecido en el pais: %s\n", jugador1 -> nombre, jugador1 -> paisActual -> pais, jugador2 -> nombre, jugador2 -> paisActual -> pais);
-
     int turnoJugador = 0;
     int jugadas = 10;
     while(jugadas--){
