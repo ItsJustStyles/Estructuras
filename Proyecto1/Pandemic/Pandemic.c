@@ -2,6 +2,7 @@
 #include <stdlib.h> 
 #include <string.h> 
 #include <time.h>
+#include <stdbool.h>
 
 //Funciones para manejo de datos;
 
@@ -75,7 +76,7 @@ int insertar_inicio(struct Dlista* lista, const char* NombrePais){
 
 #define TAMANO_INICIAL_PROYECTOS 13 //Primo para mejor rendimiento xd
 #define FACTOR_CARGA_MAXIMO 0.75 //El valor de carga para si se pasa redimencionar el diccionario xd
-#define MAX_NOMBRE_PROYECTO 50
+#define MAX_NOMBRE_PROYECTO 100
 #define MAX_DESCRIPCION 256
 #define MAX_BIBLIOGRAFIA 100
 #define MAX_PAISES_APLICADOS 100
@@ -426,35 +427,61 @@ int desplazarse_pais(struct jugadores** jugador) {
         return 0;
     }
 
-    printf("\n--- Los amigos del tilin (Vecinos) ---\n");
+    // 1. Array temporal para mapear la opción del menú al puntero del vecino real
+    struct Dnodo** vecinos_disponibles = malloc(actual->cantidad_vecinos * sizeof(struct Dnodo*));
+    if (vecinos_disponibles == NULL) {
+        printf("Error: Fallo de asignación de memoria.\n");
+        return 0;
+    }
+
+    int contadorOpciones = 0;
+    
+    printf("\n--- Los amigos del tilin (Vecinos) ---\n\n");
+    
+    // 2. Llenar el array temporal con solo los punteros NO NULL
     for (int i = 0; i < actual->cantidad_vecinos; i++) {
         struct Dnodo* vecino = actual->vecinos[i];
         if (vecino != NULL) {
+            // Imprimir la opción (1, 2, 3...) y guardar el puntero en el array temporal
             printf("%d. %s (Aspecto 1: %d, Aspecto 2: %d)\n",
-                   i + 1, vecino->pais, vecino->aspecto1, vecino->aspecto2);
+                   contadorOpciones + 1, vecino->pais, vecino->aspecto1, vecino->aspecto2);
+            vecinos_disponibles[contadorOpciones] = vecino;
+            contadorOpciones++;
         }
     }
 
+    // 3. Validación de no tener vecinos disponibles
+    if (contadorOpciones == 0){
+        printf("Este pais ya no tiene vecinos\n");
+        free(vecinos_disponibles);
+        return -1;
+    }
+
     int opcion;
-    printf("Elige el destino, evita peru \n");
+    printf("\nElige el destino, evita peru \n");
 
-    
+    // 4. Lectura de la opción
     if (scanf("%d", &opcion) != 1) {
-        printf("Sea serio\n");
+        printf("\nSea serio\n");
         while (getchar() != '\n'); 
+        free(vecinos_disponibles);
         return 0;
     }
-    
     while (getchar() != '\n');
-
     
-    if (opcion < 1 || opcion > actual->cantidad_vecinos || actual->vecinos[opcion - 1] == NULL) {
-        printf("elije bien bro\n");
+    // 5. Validación CRÍTICA: La opción debe estar en el rango de vecinos REALES
+    if (opcion < 1 || opcion > contadorOpciones) {
+        printf("\nelije bien bro. Opcion invalida. \n");
+        free(vecinos_disponibles);
         return 0;
     }
-
-    (*jugador)->paisActual = actual->vecinos[opcion - 1];
-    printf("Felicidades, evitaste bolivia, fuiste a: %s\n", (*jugador)->paisActual->pais);
+    
+    // 6. Asignar el nuevo país usando el puntero del array temporal
+    (*jugador)->paisActual = vecinos_disponibles[opcion - 1];
+    
+    printf("\nFelicidades, evitaste bolivia, fuiste a: %s\n", (*jugador)->paisActual->pais);
+    
+    free(vecinos_disponibles); // CRÍTICO: Liberar la memoria temporal
     return 1;
 }
 
@@ -467,7 +494,7 @@ int escoger_proyecto(struct ProyectosHash* proyectos, const char* nombreProyecto
     if (encontrado != NULL) {
         printf("\nProyecto Encontrado: %s\n", encontrado->nombre);
         printf("  - Descripcion: %s\n", encontrado->descripcion);
-        printf("  - Bibliografía: %s\n", encontrado->bibliografia);
+        printf("  - Actores: %s\n", encontrado->bibliografia);
     } else {
         printf("\nProyecto '%s' no encontrado.\n", nombreProyecto);
         return -1;
@@ -486,16 +513,21 @@ int escoger_proyecto(struct ProyectosHash* proyectos, const char* nombreProyecto
 int imprementar_proyecto(struct ProyectosHash* proyectos){
     int numProyecto;
     printf("\n --- PROYECTOS DISPONIBLES ---\n\n");
-    printf("1. Bombardeen Perú\n");
+    printf("1. Programa de intervención focalizada \"Grupos de Riesgo\" (Focused Dete-rrence)\n");
+    printf("2. Control de contenedores y trazabilidad agrícola inteligente\n");
 
     printf("\n¿Qué proyecto desea implementar: ");
     scanf("%d", &numProyecto);
     if(numProyecto == 1){
-        if(escoger_proyecto(proyectos, "Bombardeen Perú") == 1){
+        if(escoger_proyecto(proyectos, "Programa de intervención focalizada \"Grupos de Riesgo\" (Focused Dete-rrence)") == 1){
             printf("\nImprementando proyecto\n");
         }else{
             return -1;
         }
+    }else if(numProyecto == 2){
+            if(escoger_proyecto(proyectos, "Control de contenedores y trazabilidad agrícola inteligente") == 1){
+                printf("\nImprementando proyecto\n");
+            }
     }else{
         printf("\nBomboclat\n");
         return -1;
@@ -503,7 +535,34 @@ int imprementar_proyecto(struct ProyectosHash* proyectos){
     return 0;
 }
 
-// Eliminar elemento
+void limpiar_vecindad(struct Dlista* paises, struct Dnodo* eliminado) {
+    if (paises == NULL || paises->inicio == NULL || eliminado == NULL) {
+        return;
+    }
+
+    struct Dnodo* actual = paises->inicio;
+    
+    // Iterar sobre TODOS los países que quedan en el mapa
+    while (actual != NULL) {
+        // Un país no puede ser su propio vecino, pero verificamos si es el que se está eliminando
+        if (actual != eliminado) {
+            
+            // Iterar sobre el array de vecinos de 'actual'
+            for (int i = 0; i < actual->cantidad_vecinos; i++) {
+                
+                // Si encontramos una referencia al país que se va a eliminar
+                if (actual->vecinos[i] == eliminado) {
+                    
+                    // Reemplazar el puntero por NULL para evitar un puntero colgante (dangling pointer)
+                    actual->vecinos[i] = NULL; 
+                    
+                }
+            }
+        }
+        actual = actual->sigt;
+    }
+}
+
 int eliminar_paises(struct Dlista* paises){
     if (paises == NULL || paises->inicio == NULL) 
         return -1;
@@ -511,6 +570,7 @@ int eliminar_paises(struct Dlista* paises){
     // eliminar nodos al inicio que coincidan
     while (paises->inicio != NULL && (paises->inicio-> aspecto1 == 3 && paises->inicio-> aspecto2 == 3)) {
         struct Dnodo* temp = paises->inicio;
+        limpiar_vecindad(paises, temp);
         paises->inicio = paises->inicio->sigt;
         if (paises->inicio != NULL) {
         paises->inicio->ante = NULL;
@@ -522,6 +582,7 @@ int eliminar_paises(struct Dlista* paises){
     while (actual != NULL && actual->sigt != NULL) {
         if (actual->sigt->aspecto1 == 3 && actual->sigt->aspecto2 == 3) {
             struct Dnodo* temp = actual->sigt;
+            limpiar_vecindad(paises, temp); 
             if (actual->sigt->sigt!=NULL){
                 actual->sigt->sigt->ante=actual;
             }
@@ -538,7 +599,7 @@ int eliminar_paises(struct Dlista* paises){
     return 0;
 }
 
-#define MAX_CAMBIOS 10
+#define MAX_CAMBIOS 20
 struct cambio{
     char pais[25];
     char aspecto[15];
@@ -571,7 +632,9 @@ int expandir_problematicas(struct Dlista* paises) {
 
             if(contador_cambios < MAX_CAMBIOS){
                 strncpy(cambios[contador_cambios].pais, actual-> pais, 24);
-                strncpy(cambios[contador_cambios].aspecto, nombre_aspecto, 15);
+                cambios[contador_cambios].pais[24] = '\0'; 
+                strncpy(cambios[contador_cambios].aspecto, nombre_aspecto, 14);
+                cambios[contador_cambios].aspecto[14] = '\0'; 
                 contador_cambios++;
             }
 
@@ -586,8 +649,10 @@ int expandir_problematicas(struct Dlista* paises) {
                     (*aspecto_vecino)++;
 
                     if (contador_cambios < MAX_CAMBIOS) {
-                        strncpy(cambios[contador_cambios].pais, vecino->pais, 24);
-                        strncpy(cambios[contador_cambios].aspecto, nombre_aspecto, 9);
+                        strncpy(cambios[contador_cambios].pais, actual-> pais, 24);
+                        cambios[contador_cambios].pais[24] = '\0'; 
+                        strncpy(cambios[contador_cambios].aspecto, nombre_aspecto, 14);
+                        cambios[contador_cambios].aspecto[14] = '\0'; 
                         contador_cambios++;
                 }
             }
@@ -754,9 +819,35 @@ void mostrar_vecinos_pais(struct Dnodo* inicio_lista, const char* nombre_pais_ce
     }
     
     if (vecinos_encontrados == 0) {
-        printf("Este país aún no tiene vecinos asignados.\n");
+        printf("Este país no tiene vecinos.\n");
     }
     //printf("------------------------------------------------\n");
+}
+
+int verificar_ganar_o_perder(const struct Dlista* juego){
+    //Verificar si se gano:
+    bool aspecto_1 = true;
+    bool aspecto_2 = true;
+    int contadorPaises = 1;
+    struct Dnodo* actual = juego -> inicio;
+    while(actual -> sigt != NULL){
+        if(actual -> aspecto1 > 0){
+            aspecto_1 = false;
+        }
+        if(actual -> aspecto2){
+            aspecto_2 = false;
+        }
+        actual = actual -> sigt;
+        contadorPaises++;
+    }
+    if(aspecto_1 || aspecto_2){
+        return 1;
+    }
+    if(contadorPaises <= 3){
+        return -1;
+    }
+
+    return 0;
 }
 
 //Creo que es void o lo es por el momento xd (ok hijito)
@@ -867,10 +958,13 @@ int main(){
 
     //Paso 2: Creación e inserción de nodos de proyecto:
     //La estructura es: nombre del proyecto, descripcion, bibliografia
-    struct Pnodo* p1 = crear_nodo_proyecto("Bombardeen Perú", "La propuesta consiste en mandar ojivas hacia Perú con el fin de destruirlo", "Maicol, racista ese xd");
-    
+    struct Pnodo* p1 = crear_nodo_proyecto("Programa de intervención focalizada \"Grupos de Riesgo\" (Focused Dete-rrence)", "Identificar bandas o zonas con alta incidencia de homicidios y ofrecer mediación social, oportunidades educativas y laborales, \n   junto con aplicación rigurosa de la ley a infractores reincidentes", "Policía, fiscalía, municipalidades, ONGs sociales");
+    struct Pnodo* p2 = crear_nodo_proyecto("Control de contenedores y trazabilidad agrícola inteligente", "Implementar sistemas de escaneo no invasivo en puertos y aeropuertos, junto con plataformas de trazabilidad basadas en blockchain para productos agrícolas de exportación", "Aduanas, ministerios de seguridad y agricultura, cooperación internacional (UNODC)");
+
+
     //Se inserta
     insertar_proyecto_hash(proyectos, p1);
+    insertar_proyecto_hash(proyectos, p2);
 
     //Crear jugadores:
     struct jugadores* jugador1;
@@ -884,8 +978,8 @@ int main(){
     printf("\n--- JUGADORES ---\n");
     printf("\nEl jugador %s ha aparecido en el pais: %s\nEl jugador %s ha aparecido en el pais: %s\n", jugador1 -> nombre, jugador1 -> paisActual -> pais, jugador2 -> nombre, jugador2 -> paisActual -> pais);
     int turnoJugador = 0;
-    int jugadas = 10;
-    while(jugadas--){
+    int jugadas = verificar_ganar_o_perder(juego);
+    while(jugadas == 0){
         if(turnoJugador == 0){
             turno_jugador(&jugador1, juego, proyectos);
             turnoJugador = 1;
@@ -897,9 +991,16 @@ int main(){
         }
         expandir_problematicas(juego);
         eliminar_paises(juego);
+        jugadas = verificar_ganar_o_perder(juego);
 
     }
-    
+
+    if(jugadas == -1){
+        printf("\n--- Has perdido, muy noob bro ---\n");
+    }else{
+        printf("\n--- Has ganado, que crack ---\n");
+    }
+
     printf("\nFin del juego xd\n");
     //Liberación de memoria:
     liberar_tabla_hash_proyectos(proyectos);
