@@ -606,76 +606,72 @@ struct cambio{
 };
 
 //ya editada, se supone que lo hace con los vecinos del array, pero no lo he probado del todo, tal vez con unos prints luego
-int expandir_problematicas(struct Dlista* paises) {
-    if (paises == NULL || paises->inicio == NULL)
+
+int expandir_problematicas(struct Dlista* lista) {
+    if (lista == NULL || lista->inicio == NULL)
         return -1;
 
-    struct cambio cambios[MAX_CAMBIOS];
-    int contador_cambios = 0;
+    int total = 0;
+    struct Dnodo* tmp = lista->inicio;
+    while (tmp != NULL) {
+        total++;
+        tmp = tmp->sigt;
+    }
+    if (total == 0) 
+        return -1;
+
     
-    for (int i = 0; i < 3; i++) {
-        struct Dnodo* actual = paises->inicio;
-        int indice_aleatorio1 = rand() % 9;
+    int indice = rand() % total;
+    struct Dnodo* elegido = lista->inicio;
+    for (int i = 0; i < indice; i++) {
+        if (elegido->sigt == NULL) 
+            break;
+        elegido = elegido->sigt;
+    }
+
+    
+    int aspecto = rand() % 2;
+    int *valor = (aspecto == 0) ? &elegido->aspecto1 : &elegido->aspecto2;
+
+    printf("\nExpansión: país elegido → %s (aspecto%d actual: %d)\n",
+           elegido->pais, aspecto + 1, *valor);
+
+    
+    if (*valor == 3) {
+        printf("  %s ya estaba en 3 → propaga a sus vecinos.\n", elegido->pais);
 
         
-        for (int j = 0; j < indice_aleatorio1; j++) {
-            if (actual->sigt == NULL) break;
-            actual = actual->sigt;
+        if (elegido->cantidad_vecinos <= 0 || elegido->vecinos == NULL) {
+            printf("   (No tiene vecinos para propagar)\n");
+            return 0;
         }
 
-        int num_aspecto = rand() % 2;
-        int* aspecto = (num_aspecto == 0) ? &actual->aspecto1 : &actual->aspecto2;
-        const char* nombre_aspecto = (num_aspecto == 0) ? "Aspecto 1" : "Aspecto 2";
-
-        if (*aspecto < 3) {
-            (*aspecto)++;
-
-            if(contador_cambios < MAX_CAMBIOS){
-                strncpy(cambios[contador_cambios].pais, actual-> pais, 24);
-                cambios[contador_cambios].pais[24] = '\0'; 
-                strncpy(cambios[contador_cambios].aspecto, nombre_aspecto, 14);
-                cambios[contador_cambios].aspecto[14] = '\0'; 
-                contador_cambios++;
-            }
-
-        } else {
-            
-            for (int v = 0; v < actual->cantidad_vecinos; v++) {
-                struct Dnodo* vecino = actual->vecinos[v];
-                if (vecino == NULL) continue;
-
-                int* aspecto_vecino = (num_aspecto == 0) ? &vecino->aspecto1 : &vecino->aspecto2;
-                if (*aspecto_vecino < 3) {
-                    (*aspecto_vecino)++;
-
-                    if (contador_cambios < MAX_CAMBIOS) {
-                        strncpy(cambios[contador_cambios].pais, actual-> pais, 24);
-                        cambios[contador_cambios].pais[24] = '\0'; 
-                        strncpy(cambios[contador_cambios].aspecto, nombre_aspecto, 14);
-                        cambios[contador_cambios].aspecto[14] = '\0'; 
-                        contador_cambios++;
-                }
+        for (int v = 0; v < elegido->cantidad_vecinos; v++) {
+            struct Dnodo* vecino = elegido->vecinos[v];
+            if (vecino == NULL) continue; // slot vacío
+            int *valor_vecino = (aspecto == 0) ? &vecino->aspecto1 : &vecino->aspecto2;
+            if (*valor_vecino < 3) {
+                (*valor_vecino)++;
+                printf("   → Vecino afectado: %s, aspecto%d sube a %d.\n",
+                       vecino->pais, aspecto + 1, *valor_vecino);
+            } else {
+                
+                printf("   → Vecino %s ya en 3 (sin cambio).\n", vecino->pais);
             }
         }
     }
-    }
-    printf("\n=======================================================\n");
-    printf("        --- REPORTE DE EXPANSIÓN DE PROBLEMAS ---\n");
-    printf("=======================================================\n");
     
-    if (contador_cambios == 0) {
-        printf("No hubo cambios en este turno.\n");
-    } else {
-        for (int k = 0; k < contador_cambios; k++) {
-            printf("⚠️ [%s] aumentó el %s\n", 
-                   cambios[k].pais, 
-                   cambios[k].aspecto);
+    else {
+        if (*valor < 3) {
+            (*valor)++;
+            if (*valor > 3) *valor = 3; // por si acaso
+            printf("   %s aumenta su aspecto%d a %d.\n",
+                   elegido->pais, aspecto + 1, *valor);
         }
     }
-    printf("-------------------------------------------------------\n");
+
     return 0;
 }
-
 
 int Generacion_vecinos(struct Dlista* paises){
     if (paises == NULL || paises->inicio == NULL) 
@@ -684,7 +680,7 @@ int Generacion_vecinos(struct Dlista* paises){
     struct Dnodo* actual = paises->inicio;
 
     while (actual != NULL){
-        int cant_vecinos = rand() % 3 + 1; // entre 1 y 3 vecinos
+        int cant_vecinos = rand() % 3 + 1; 
         actual->cantidad_vecinos = cant_vecinos;
         actual->vecinos = calloc(cant_vecinos, sizeof(struct Dnodo*)); // reserva memoria
         actual = actual->sigt;
