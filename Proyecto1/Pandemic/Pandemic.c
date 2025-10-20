@@ -86,6 +86,8 @@ struct Pnodo{
     char descripcion[MAX_DESCRIPCION];
     char bibliografia[MAX_BIBLIOGRAFIA];
 
+    struct Dlista* aspecto_paises;
+
     struct Pnodo* sigt;
 };
 
@@ -150,13 +152,14 @@ struct ProyectosHash* crear_tabla_hash_proyectos(){
     return tabla;
 }
 
-struct Pnodo* crear_nodo_proyecto(const char* nombre, const char* desc, const char* biblio) {
+struct Pnodo* crear_nodo_proyecto(const char* nombre, const char* desc, const char* biblio, struct Dlista* aspecto) {
     struct Pnodo* nuevo_nodo = calloc(1, sizeof(struct Pnodo));
     if(nuevo_nodo == NULL) return NULL;
 
     strncpy(nuevo_nodo->nombre, nombre, MAX_NOMBRE_PROYECTO - 1);
     strncpy(nuevo_nodo->descripcion, desc, MAX_DESCRIPCION - 1);
     strncpy(nuevo_nodo->bibliografia, biblio, MAX_BIBLIOGRAFIA - 1);
+    nuevo_nodo -> aspecto_paises = aspecto;
     
     nuevo_nodo->sigt = NULL;
     return nuevo_nodo;
@@ -485,9 +488,33 @@ int desplazarse_pais(struct jugadores** jugador) {
     return 1;
 }
 
+int guardar_proyecto_pais(struct Pnodo* encontrado, struct jugadores* jugador){
+    struct Dnodo* actual = encontrado -> aspecto_paises -> inicio;
+    while(actual != NULL){
+        if(strcmp(actual -> pais, jugador -> paisActual -> pais) == 0){
+            return -1;
+        }
+        actual = actual -> sigt;
+    }
+    insertar_inicio(encontrado -> aspecto_paises, jugador -> paisActual -> pais);
+}
 
+int imprimir_paises_proyecto(struct Pnodo* encontrado){
+    struct Dnodo* actual = encontrado -> aspecto_paises -> inicio;
+    if(actual == NULL){
+        printf("  - Paises en donde se aplico: ninguno\n");
+        return 0;
+    }
+    printf("  - Paises en donde se aplico: ");
+    while(actual -> sigt != NULL){
+        printf("%s, ", actual -> pais);
+        actual = actual -> sigt;
+    }
+    printf("%s", actual -> pais);
+    return 0;
+}
 
-int escoger_proyecto(struct ProyectosHash* proyectos, const char* nombreProyecto){
+int escoger_proyecto(struct ProyectosHash* proyectos, const char* nombreProyecto, struct jugadores* jugador){
     char implementacion[5];
     struct Pnodo* encontrado = buscar_proyecto_hash(proyectos, nombreProyecto);
 
@@ -495,6 +522,7 @@ int escoger_proyecto(struct ProyectosHash* proyectos, const char* nombreProyecto
         printf("\nProyecto Encontrado: %s\n", encontrado->nombre);
         printf("  - Descripcion: %s\n", encontrado->descripcion);
         printf("  - Actores: %s\n", encontrado->bibliografia);
+        imprimir_paises_proyecto(encontrado);
     } else {
         printf("\nProyecto '%s' no encontrado.\n", nombreProyecto);
         return -1;
@@ -505,12 +533,13 @@ int escoger_proyecto(struct ProyectosHash* proyectos, const char* nombreProyecto
         return -1; 
     }
     if(strcasecmp(implementacion, "si") == 0){
+        guardar_proyecto_pais(encontrado, jugador);
         return 1;
     }
     return -1;
 }
 
-int imprementar_proyecto(struct ProyectosHash* proyectos){
+int imprementar_proyecto(struct ProyectosHash* proyectos, struct jugadores* jugador){
     int numProyecto;
     printf("\n --- PROYECTOS DISPONIBLES ---\n\n");
     printf("1. Programa de intervención focalizada \"Grupos de Riesgo\" (Focused Dete-rrence)\n");
@@ -519,14 +548,28 @@ int imprementar_proyecto(struct ProyectosHash* proyectos){
     printf("\n¿Qué proyecto desea implementar: ");
     scanf("%d", &numProyecto);
     if(numProyecto == 1){
-        if(escoger_proyecto(proyectos, "Programa de intervención focalizada \"Grupos de Riesgo\" (Focused Dete-rrence)") == 1){
+        if(escoger_proyecto(proyectos, "Programa de intervención focalizada \"Grupos de Riesgo\" (Focused Dete-rrence)", jugador) == 1){
             printf("\nImprementando proyecto\n");
+            struct Dnodo* actual = jugador -> paisActual;
+            if(actual -> aspecto1 == 0){
+                printf("\nEl aspecto ya es cero en este pais\n");
+            }else{
+                actual -> aspecto1--;
+                printf("\nSe ha reducido en uno el aspecto del pais\n");
+            }
         }else{
             return -1;
         }
     }else if(numProyecto == 2){
-            if(escoger_proyecto(proyectos, "Control de contenedores y trazabilidad agrícola inteligente") == 1){
+            if(escoger_proyecto(proyectos, "Control de contenedores y trazabilidad agrícola inteligente", jugador) == 1){
                 printf("\nImprementando proyecto\n");
+                struct Dnodo* actual = jugador -> paisActual;
+                if(actual -> aspecto2 == 0){
+                    printf("\nEl aspecto ya es cero en este pais\n");
+                }else{
+                    actual -> aspecto2--;
+                    printf("\nSe ha reducido en uno el aspecto del pais\n");
+                }
             }
     }else{
         printf("\nBomboclat\n");
@@ -606,72 +649,76 @@ struct cambio{
 };
 
 //ya editada, se supone que lo hace con los vecinos del array, pero no lo he probado del todo, tal vez con unos prints luego
-
-int expandir_problematicas(struct Dlista* lista) {
-    if (lista == NULL || lista->inicio == NULL)
+int expandir_problematicas(struct Dlista* paises) {
+    if (paises == NULL || paises->inicio == NULL)
         return -1;
 
-    int total = 0;
-    struct Dnodo* tmp = lista->inicio;
-    while (tmp != NULL) {
-        total++;
-        tmp = tmp->sigt;
-    }
-    if (total == 0) 
-        return -1;
-
+    struct cambio cambios[MAX_CAMBIOS];
+    int contador_cambios = 0;
     
-    int indice = rand() % total;
-    struct Dnodo* elegido = lista->inicio;
-    for (int i = 0; i < indice; i++) {
-        if (elegido->sigt == NULL) 
-            break;
-        elegido = elegido->sigt;
-    }
-
-    
-    int aspecto = rand() % 2;
-    int *valor = (aspecto == 0) ? &elegido->aspecto1 : &elegido->aspecto2;
-
-    printf("\nExpansión: país elegido → %s (aspecto%d actual: %d)\n",
-           elegido->pais, aspecto + 1, *valor);
-
-    
-    if (*valor == 3) {
-        printf("  %s ya estaba en 3 → propaga a sus vecinos.\n", elegido->pais);
+    for (int i = 0; i < 3; i++) {
+        struct Dnodo* actual = paises->inicio;
+        int indice_aleatorio1 = rand() % 9;
 
         
-        if (elegido->cantidad_vecinos <= 0 || elegido->vecinos == NULL) {
-            printf("   (No tiene vecinos para propagar)\n");
-            return 0;
+        for (int j = 0; j < indice_aleatorio1; j++) {
+            if (actual->sigt == NULL) break;
+            actual = actual->sigt;
         }
 
-        for (int v = 0; v < elegido->cantidad_vecinos; v++) {
-            struct Dnodo* vecino = elegido->vecinos[v];
-            if (vecino == NULL) continue; // slot vacío
-            int *valor_vecino = (aspecto == 0) ? &vecino->aspecto1 : &vecino->aspecto2;
-            if (*valor_vecino < 3) {
-                (*valor_vecino)++;
-                printf("   → Vecino afectado: %s, aspecto%d sube a %d.\n",
-                       vecino->pais, aspecto + 1, *valor_vecino);
-            } else {
-                
-                printf("   → Vecino %s ya en 3 (sin cambio).\n", vecino->pais);
+        int num_aspecto = rand() % 2;
+        int* aspecto = (num_aspecto == 0) ? &actual->aspecto1 : &actual->aspecto2;
+        const char* nombre_aspecto = (num_aspecto == 0) ? "Aspecto 1" : "Aspecto 2";
+
+        if (*aspecto < 3) {
+            (*aspecto)++;
+
+            if(contador_cambios < MAX_CAMBIOS){
+                strncpy(cambios[contador_cambios].pais, actual-> pais, 24);
+                cambios[contador_cambios].pais[24] = '\0'; 
+                strncpy(cambios[contador_cambios].aspecto, nombre_aspecto, 14);
+                cambios[contador_cambios].aspecto[14] = '\0'; 
+                contador_cambios++;
+            }
+
+        } else {
+            
+            for (int v = 0; v < actual->cantidad_vecinos; v++) {
+                struct Dnodo* vecino = actual->vecinos[v];
+                if (vecino == NULL) continue;
+
+                int* aspecto_vecino = (num_aspecto == 0) ? &vecino->aspecto1 : &vecino->aspecto2;
+                if (*aspecto_vecino < 3) {
+                    (*aspecto_vecino)++;
+
+                    if (contador_cambios < MAX_CAMBIOS) {
+                        strncpy(cambios[contador_cambios].pais, actual-> pais, 24);
+                        cambios[contador_cambios].pais[24] = '\0'; 
+                        strncpy(cambios[contador_cambios].aspecto, nombre_aspecto, 14);
+                        cambios[contador_cambios].aspecto[14] = '\0'; 
+                        contador_cambios++;
+                }
             }
         }
     }
+    }
+    printf("\n=======================================================\n");
+    printf("        --- REPORTE DE EXPANSIÓN DE PROBLEMAS ---\n");
+    printf("=======================================================\n");
     
-    else {
-        if (*valor < 3) {
-            (*valor)++;
-            if (*valor > 3) *valor = 3; // por si acaso
-            printf("   %s aumenta su aspecto%d a %d.\n",
-                   elegido->pais, aspecto + 1, *valor);
+    if (contador_cambios == 0) {
+        printf("No hubo cambios en este turno.\n");
+    } else {
+        for (int k = 0; k < contador_cambios; k++) {
+            printf("⚠️ [%s] aumentó el %s\n", 
+                   cambios[k].pais, 
+                   cambios[k].aspecto);
         }
     }
-
+    printf("-------------------------------------------------------\n");
     return 0;
 }
+
 
 int Generacion_vecinos(struct Dlista* paises){
     if (paises == NULL || paises->inicio == NULL) 
@@ -680,7 +727,7 @@ int Generacion_vecinos(struct Dlista* paises){
     struct Dnodo* actual = paises->inicio;
 
     while (actual != NULL){
-        int cant_vecinos = rand() % 3 + 1; 
+        int cant_vecinos = rand() % 3 + 1; // entre 1 y 3 vecinos
         actual->cantidad_vecinos = cant_vecinos;
         actual->vecinos = calloc(cant_vecinos, sizeof(struct Dnodo*)); // reserva memoria
         actual = actual->sigt;
@@ -867,7 +914,7 @@ void turno_jugador(struct jugadores** jugador, struct Dlista* paises, struct Pro
         }else if(accion == 3){
             printf("\nUsted se encuentra en el país: %s\n", (*jugador) -> paisActual -> pais);
         }else if(accion == 2){
-            if(imprementar_proyecto(proyectos) == 0){
+            if(imprementar_proyecto(proyectos, *jugador) == 0){
                 //Falta que se baje el aspecto del pais en el que se encuentra
                 turnosRestantes--;
             }
@@ -954,8 +1001,11 @@ int main(){
 
     //Paso 2: Creación e inserción de nodos de proyecto:
     //La estructura es: nombre del proyecto, descripcion, bibliografia
-    struct Pnodo* p1 = crear_nodo_proyecto("Programa de intervención focalizada \"Grupos de Riesgo\" (Focused Dete-rrence)", "Identificar bandas o zonas con alta incidencia de homicidios y ofrecer mediación social, oportunidades educativas y laborales, \n   junto con aplicación rigurosa de la ley a infractores reincidentes", "Policía, fiscalía, municipalidades, ONGs sociales");
-    struct Pnodo* p2 = crear_nodo_proyecto("Control de contenedores y trazabilidad agrícola inteligente", "Implementar sistemas de escaneo no invasivo en puertos y aeropuertos, junto con plataformas de trazabilidad basadas en blockchain para productos agrícolas de exportación", "Aduanas, ministerios de seguridad y agricultura, cooperación internacional (UNODC)");
+    struct Dlista* aspecto1 = crear_lista();
+    struct Dlista* aspecto2 = crear_lista();
+
+    struct Pnodo* p1 = crear_nodo_proyecto("Programa de intervención focalizada \"Grupos de Riesgo\" (Focused Dete-rrence)", "Identificar bandas o zonas con alta incidencia de homicidios y ofrecer mediación social, oportunidades educativas y laborales, \n   junto con aplicación rigurosa de la ley a infractores reincidentes", "Policía, fiscalía, municipalidades, ONGs sociales", aspecto1);
+    struct Pnodo* p2 = crear_nodo_proyecto("Control de contenedores y trazabilidad agrícola inteligente", "Implementar sistemas de escaneo no invasivo en puertos y aeropuertos, junto con plataformas de trazabilidad basadas en blockchain para productos agrícolas de exportación", "Aduanas, ministerios de seguridad y agricultura, cooperación internacional (UNODC)", aspecto2);
 
 
     //Se inserta
@@ -1001,6 +1051,8 @@ int main(){
     //Liberación de memoria:
     liberar_tabla_hash_proyectos(proyectos);
     liberar_lista(juego);
+    liberar_lista(aspecto1);
+    liberar_lista(aspecto2);
     liberar_jugador(jugador1);
     liberar_jugador(jugador2);
     return 0;
