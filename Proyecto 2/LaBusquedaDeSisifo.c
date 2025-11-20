@@ -1,6 +1,8 @@
 //Zona de imports necesarios para el programa:
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <limits.h>
 
 // - Definiciones de  estructuras de datos:
 
@@ -18,10 +20,22 @@ struct Dlista{
     struct Dnodo* inicio;
 };
 
-struct Heap {
-    int *array;
-    int size;
-    int capacity;
+struct HeapArticulo {
+
+    struct Articulo *array; 
+    int size;               
+    int capacity;           
+   
+    int (*comparador)(const struct Articulo*, const struct Articulo*);
+};
+
+struct Articulo {
+    char nombre_autor[21];   //Se puede hacer mejor xd, ahora si de verdad, luego vemos 
+    char apellidos_autor[41]; 
+    char titulo[71];          
+    char ruta[51];            
+    char anio[5];             
+    char resumen[81];         
 };
 //Funciones para el manejo de la lista enlazada:
 
@@ -67,95 +81,86 @@ int insertar_inicio_Dlista(struct Dlista* lista, int n){
 }
 
 //Funciones para el manejo del Heap:
+//*********************************************************************** */
 
-// Crear heap
-struct Heap* crear_heap(int capacidad) {
-    struct Heap* heap = calloc(1, sizeof(struct Heap));
-    if(heap == NULL) {
+struct HeapArticulo* crear_heap_articulos(int capacidad,
+                                          int (*comparador)(const struct Articulo*, const struct Articulo*)) {
+    if(capacidad <= 0 || comparador == NULL) return NULL;
+
+    struct HeapArticulo* h = calloc(1, sizeof(struct HeapArticulo));
+    if(h == NULL) return NULL;
+
+    h->array = calloc(capacidad, sizeof(struct Articulo));
+    if(h->array == NULL) {
+        free(h);
         return NULL;
     }
 
-    heap->array = calloc(capacidad, sizeof(int));
-    if(heap->array == NULL) {
-        free(heap);
-        return NULL;
-    }
-
-    heap->size = 0;
-    heap->capacity = capacidad;
-
-    return heap;
+    h->size = 0;
+    h->capacity = capacidad;
+    h->comparador = comparador;
+    return h;
 }
 
-// Función para intercambiar valores
-void swap(int *a, int *b) {
-    int temp = *a;
-    *a = *b;
-    *b = temp;
+// intercambia dos posiciones del array
+void swap_articulo(struct Articulo *a, struct Articulo *b) {
+    struct Articulo tmp;
+    memcpy(&tmp, a, sizeof(struct Articulo));
+    memcpy(a, b, sizeof(struct Articulo));
+    memcpy(b, &tmp, sizeof(struct Articulo));
 }
 
-// Mantiene la propiedad del heap máximo
-void heapify(struct Heap* heap, int i) {
+//mantener propiedad de montículo máximo según comparador
+void heapify_articulos(struct HeapArticulo* heap, int i) {
+    if(heap == NULL) return;
     int largest = i;
-    int left  = 2 * i + 1;
+    int left = 2 * i + 1;
     int right = 2 * i + 2;
 
-    if(left < heap->size && heap->array[left] > heap->array[largest]) {
+    if(left < heap->size && heap->comparador(&heap->array[left], &heap->array[largest]) > 0)
         largest = left;
-    }
 
-    if(right < heap->size && heap->array[right] > heap->array[largest]) {
+    if(right < heap->size && heap->comparador(&heap->array[right], &heap->array[largest]) > 0)
         largest = right;
-    }
 
     if(largest != i) {
-        swap(&heap->array[i], &heap->array[largest]);
-        heapify(heap, largest);
+        swap_articulo(&heap->array[i], &heap->array[largest]);
+        heapify_articulos(heap, largest);
     }
 }
 
-// Insertar un valor en el heap
-int insertar_heap(struct Heap* heap, int valor) {
-    if(heap == NULL) return -1;
 
-    if(heap->size == heap->capacity) {
-        return -1; // Overflow
-    }
+int insertar_heap_articulo(struct HeapArticulo* heap, const struct Articulo* art) {
+    if(heap == NULL || art == NULL) return -1;
+    if(heap->size == heap->capacity) return -1; // overflow
 
     int i = heap->size;
-    heap->array[i] = valor;
+    
+    memcpy(&heap->array[i], art, sizeof(struct Articulo));
     heap->size++;
 
-    // Subir para mantener el heap máximo
-    while(i != 0 && heap->array[(i - 1) / 2] < heap->array[i]) {
-        swap(&heap->array[i], &heap->array[(i - 1) / 2]);
+
+    while(i != 0 && heap->comparador(&heap->array[i], &heap->array[(i - 1) / 2]) > 0) {
+        swap_articulo(&heap->array[i], &heap->array[(i - 1) / 2]);
         i = (i - 1) / 2;
     }
-
     return 0;
 }
 
-// Extraer el valor máximo (raíz del heap)
-int extraer_max(struct Heap* heap) {
-    if(heap == NULL || heap->size <= 0) {
-        return -999999; // Error según tu estilo
-    }
+// extraer máximo 
+int extraer_max_articulo(struct HeapArticulo* heap, struct Articulo* out) {
+    if(heap == NULL || out == NULL) return -1;
+    if(heap->size <= 0) return -1;
 
-    if(heap->size == 1) {
-        heap->size--;
-        return heap->array[0];
-    }
+    
+    memcpy(out, &heap->array[0], sizeof(struct Articulo));
 
-    int root = heap->array[0];
+    
     heap->array[0] = heap->array[heap->size - 1];
     heap->size--;
-
-    heapify(heap, 0);
-
-    return root;
+    heapify_articulos(heap, 0);
+    return 0;
 }
-
-
 // - Funciones para manejo de memoria:
 
 int liberar_Dlista(struct Dlista* lista){
@@ -175,10 +180,8 @@ int liberar_Dlista(struct Dlista* lista){
     return 0;
 }
 
-
-void liberar_heap(struct Heap* heap) {
+void liberar_heap_articulos(struct HeapArticulo* heap) {
     if(heap == NULL) return;
-
     free(heap->array);
     free(heap);
 }
@@ -199,14 +202,18 @@ int imprimir_Dlista(struct Dlista* lista){
 
 }
 
-void imprimir_heap(struct Heap* heap) {
-    if(heap == NULL) return;
-
-    for(int i = 0; i < heap->size; i++) {
-        printf("%d ", heap->array[i]);
-    }
-    printf("\n");
+void imprimir_articulo(const struct Articulo* articulo) {
+    if(articulo == NULL) return;
+    printf("Autor: %s %s\n", articulo->nombre_autor, articulo->apellidos_autor);
+    printf("Titulo: %s\n", articulo->titulo);
+    printf("Ruta: %s\n", articulo->ruta);
+    printf("Anio: %s\n", articulo->anio);
+    printf("Resumen: %s\n", articulo->resumen);
+    printf("---------------\n");
 }
+
+
+
 
 
 int main(){
