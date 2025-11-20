@@ -69,5 +69,6 @@
             "italic": false
         }
 
-    ]
+    ],
+    "C_Cpp.default.compilerPath": "C:/MinGW/bin/gcc.exe"
 }
