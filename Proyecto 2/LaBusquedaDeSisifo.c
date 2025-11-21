@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 // - Funciones para manejar el ordenamiento de los articulos:
 
@@ -89,7 +90,7 @@ struct Heap* crear_heap(int capacidad){
 
 // / Aqui se insertan los articulos dependiendo del ordenamiento de cada uno en el heap que le corresponda:
 
-int insertar_heap_tamanoTitulo(struct Heap* heap, struct Articulo articulo){
+int insertar_heap_tamanoTitulo(struct Heap* heap, struct Articulo articulo, int orden){
     if(heap -> tamano == heap -> capacidad){
         return -1;
     }
@@ -100,6 +101,8 @@ int insertar_heap_tamanoTitulo(struct Heap* heap, struct Articulo articulo){
 
     //todo: Más adelante se puede imprementar que en el struct Articulo se guarde la cantidad de palabras que tiene el titulo para simplificar esto:
     int palabras_hijo = contar_palabras(heap -> array[i].titulo);
+
+    if(orden == 1){
 
     while(i != 0){
         int indice_padre = (i-1)/2;
@@ -116,39 +119,60 @@ int insertar_heap_tamanoTitulo(struct Heap* heap, struct Articulo articulo){
         }
 
     }
+    }else{
+
+        while(i != 0){
+            int indice_padre = (i-1)/2;
+            int palabras_padre = contar_palabras(heap -> array[indice_padre].titulo);
+
+            if(palabras_hijo > palabras_padre){
+                struct Articulo temp = heap -> array[i];
+                heap -> array[i] = heap -> array[indice_padre];
+                heap -> array[indice_padre] = temp;
+
+                i = indice_padre;
+            }else{
+                break;
+            }
+
+        }
+    }
+
     return 0;
     
 }
 
-void heapify_tamanoTitulo(struct Heap* heap, int i){
+void heapify_tamanoTitulo(struct Heap* heap, int i, int orden){
     int menor = i;
     int izq = i * 2 + 1;
     int der = i * 2 + 2;
 
+    bool es_min_heap = (orden == 1);
+
     if(izq < heap -> tamano){
         int palabras_izq = contar_palabras(heap -> array[izq].titulo);
         int palabras_menor = contar_palabras(heap -> array[menor].titulo);
-        if(palabras_izq < palabras_menor){
+        if ((es_min_heap && palabras_izq < palabras_menor) || (!es_min_heap && palabras_izq > palabras_menor)) {
             menor = izq;
         }
     }
 
     if(der < heap -> tamano){
-        int palabras_der = contar_palabras(heap -> array[izq].titulo);
+        int palabras_der = contar_palabras(heap -> array[der].titulo);
         int palabras_menor = contar_palabras(heap -> array[menor].titulo);
-        if(palabras_der < palabras_menor){
+        if ((es_min_heap && palabras_der < palabras_menor) || (!es_min_heap && palabras_der > palabras_menor)) {
             menor = der;
         }
     }
 
     if(menor != i){
         intercambiar(&heap->array[i], &heap->array[menor]);
-        heapify_tamanoTitulo(heap, menor);
+        heapify_tamanoTitulo(heap, menor, orden);
     }
 
 }
 
-struct Articulo extraerHeap_tamanoTitulo(struct Heap* heap){
+struct Articulo extraerHeap_tamanoTitulo(struct Heap* heap, int orden){
     if (heap == NULL || heap->tamano == 0) {
 
     }
@@ -160,28 +184,28 @@ struct Articulo extraerHeap_tamanoTitulo(struct Heap* heap){
     heap -> tamano--;
 
     if (heap->tamano > 0) {
-        heapify_tamanoTitulo(heap, 0); 
+        heapify_tamanoTitulo(heap, 0, orden); 
     }
 
     return min_articulo;
 }
 
-void heapSortPorTamanoTitulo(struct Articulo lista[], int indicesCargados, struct Heap* heap){
+void heapSortPorTamanoTitulo(struct Articulo lista[], int indicesCargados, struct Heap* heap, int orden){
     for(int i = 0; i  < indicesCargados; i++){
-        insertar_heap_tamanoTitulo(heap, lista[i]);
+        insertar_heap_tamanoTitulo(heap, lista[i], orden);
     }
 
     for(int i = 0; i < indicesCargados; i++){
 
-    struct Articulo articulo = extraerHeap_tamanoTitulo(heap);
+        struct Articulo articulo = extraerHeap_tamanoTitulo(heap, orden);
     
-    printf("Autor: %s\n", articulo.nombre_autor);
-    printf("Apellidos autor: %s\n", articulo.apellidos_autor);
-    printf("Titulo: %s\n", articulo.titulo);
-    printf("Ruta: %s\n", articulo.ruta);
-    printf("Año: %d\n", articulo.anio);
-    printf("Resumen: %s\n", articulo.resumen);
-    printf("\n");
+        printf("Autor: %s\n", articulo.nombre_autor);
+        printf("Apellidos autor: %s\n", articulo.apellidos_autor);
+        printf("Titulo: %s\n", articulo.titulo);
+        printf("Ruta: %s\n", articulo.ruta);
+        printf("Año: %d\n", articulo.anio);
+        printf("Resumen: %s\n", articulo.resumen);
+        printf("\n");
 
     }
 
@@ -289,7 +313,7 @@ void imprimir_articulo(struct Articulo articulo){
 
 int main(){
     // * Variables ara los archivos:
-    int MAXARTICULOS = 10;
+    int MAXARTICULOS = 70;
     const char *ARCHIVO = "Documentos/Archivos.txt";
 
     // * Iniciar las estructuras:
@@ -314,8 +338,11 @@ int main(){
 
         switch(opcion){
             case 2:
+                printf("1. Ascendente\n");
+                printf("2. Descendente\n");
+                scanf("%d", &opcion);
                 printf("\n");
-                heapSortPorTamanoTitulo(listaArticulos, indicesCargados, heap);
+                heapSortPorTamanoTitulo(listaArticulos, indicesCargados, heap, opcion);
                 break;
             case 5:
                 printf("Saliendo...\n");
@@ -328,5 +355,6 @@ int main(){
     }while(opcion != 5);
 
     // * Liberar la memoria usada
+    printf("%d\n", indicesCargados);
     liberar_heap(heap);
 }
