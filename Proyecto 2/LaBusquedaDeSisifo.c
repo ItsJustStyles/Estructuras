@@ -56,7 +56,15 @@ struct Heap{
 };
 
 
-//Funciones para el manejo de la lista enlazada:
+
+// Función auxiliar:
+void intercambiar(struct Articulo *a, struct Articulo *b) {
+    struct Articulo temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+// Los heaps
 
 struct Heap* crear_heap(int capacidad){
 
@@ -81,7 +89,7 @@ struct Heap* crear_heap(int capacidad){
 
 // / Aqui se insertan los articulos dependiendo del ordenamiento de cada uno en el heap que le corresponda:
 
-int insertar_heap_CantPalabras(struct Heap* heap, struct Articulo articulo){
+int insertar_heap_tamanoTitulo(struct Heap* heap, struct Articulo articulo){
     if(heap -> tamano == heap -> capacidad){
         return -1;
     }
@@ -112,12 +120,71 @@ int insertar_heap_CantPalabras(struct Heap* heap, struct Articulo articulo){
     
 }
 
-struct Articulo extraerArticulo_menor(struct Heap* heap){
+void heapify_tamanoTitulo(struct Heap* heap, int i){
+    int menor = i;
+    int izq = i * 2 + 1;
+    int der = i * 2 + 2;
+
+    if(izq < heap -> tamano){
+        int palabras_izq = contar_palabras(heap -> array[izq].titulo);
+        int palabras_menor = contar_palabras(heap -> array[menor].titulo);
+        if(palabras_izq < palabras_menor){
+            menor = izq;
+        }
+    }
+
+    if(der < heap -> tamano){
+        int palabras_der = contar_palabras(heap -> array[izq].titulo);
+        int palabras_menor = contar_palabras(heap -> array[menor].titulo);
+        if(palabras_der < palabras_menor){
+            menor = der;
+        }
+    }
+
+    if(menor != i){
+        intercambiar(&heap->array[i], &heap->array[menor]);
+        heapify_tamanoTitulo(heap, menor);
+    }
+
+}
+
+struct Articulo extraerHeap_tamanoTitulo(struct Heap* heap){
     if (heap == NULL || heap->tamano == 0) {
 
     }
-    //todo: Falta poner lo de eliminar y burbujear si es que se implementa con borrar el min (Creo que hay que hacerlo porque es la unica manera de obtener el min)
-    return heap -> array[0];
+    
+    struct Articulo min_articulo = heap -> array[0];
+
+    intercambiar(&heap->array[0], &heap->array[heap->tamano - 1]);
+
+    heap -> tamano--;
+
+    if (heap->tamano > 0) {
+        heapify_tamanoTitulo(heap, 0); 
+    }
+
+    return min_articulo;
+}
+
+void heapSortPorTamanoTitulo(struct Articulo lista[], int indicesCargados, struct Heap* heap){
+    for(int i = 0; i  < indicesCargados; i++){
+        insertar_heap_tamanoTitulo(heap, lista[i]);
+    }
+
+    for(int i = 0; i < indicesCargados; i++){
+
+    struct Articulo articulo = extraerHeap_tamanoTitulo(heap);
+    
+    printf("Autor: %s\n", articulo.nombre_autor);
+    printf("Apellidos autor: %s\n", articulo.apellidos_autor);
+    printf("Titulo: %s\n", articulo.titulo);
+    printf("Ruta: %s\n", articulo.ruta);
+    printf("Año: %d\n", articulo.anio);
+    printf("Resumen: %s\n", articulo.resumen);
+    printf("\n");
+
+    }
+
 }
 
 // - Funciones para manejo de memoria:
@@ -233,16 +300,6 @@ int main(){
     struct Articulo listaArticulos[MAXARTICULOS]; //todo: Más adelante se puede cambiar por una lista simple
     int indicesCargados = cargarIndice(listaArticulos, MAXARTICULOS, ARCHIVO);
 
-    //Añadir al heap:
-    if(indicesCargados <= 0){
-        printf("XD");
-        return -1;
-    }
-
-    for(int i = 0; i < indicesCargados; i++){
-        insertar_heap_CantPalabras(heap,listaArticulos[i]);
-    }
-
     int opcion;
     do{
         printf("\n========== MENU DE ORDENAMIENTOS ==========\n");
@@ -257,9 +314,8 @@ int main(){
 
         switch(opcion){
             case 2:
-                struct Articulo articuloMenor = extraerArticulo_menor(heap);
-                printf("\n"); //todo: Añade un espacio en la parte de arriba del primer articulo para que se vea mejor xd
-                imprimir_articulo(articuloMenor);
+                printf("\n");
+                heapSortPorTamanoTitulo(listaArticulos, indicesCargados, heap);
                 break;
             case 5:
                 printf("Saliendo...\n");
