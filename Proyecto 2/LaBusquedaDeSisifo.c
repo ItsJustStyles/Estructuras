@@ -2,230 +2,275 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
+
+// - Funciones para manejar el ordenamiento de los articulos:
+
+int contar_palabras(char *texto){
+
+    if(texto == NULL){
+        return 0;
+    }
+
+    int estado = 0;
+    int contadorPalabras = 0;
+    int i = 0;
+
+    while(texto[i] != '\0'){
+
+        if(texto[i] == ' ' || texto[i] == '\t' || texto[i] == '\n'){
+            estado = 0;
+        }
+
+        else if(estado == 0){
+            estado = 1;
+            contadorPalabras++;
+        }
+
+        i++;
+
+    }
+
+    return contadorPalabras;
+
+}
 
 // - Definiciones de  estructuras de datos:
 
 // Lista doblemente enlazada:
 
-// Nodo de la lista doblemente enlazada:
-struct Dnodo{
-    int num;
-
-    struct Dnodo* sigt;
-    struct Dnodo* ant;
-};
-
-struct Dlista{
-    struct Dnodo* inicio;
-};
-
-struct HeapArticulo {
-
-    struct Articulo *array; 
-    int size;               
-    int capacity;           
-   
-    int (*comparador)(const struct Articulo*, const struct Articulo*);
-};
-
+//Define la estructura que tendra un articulo
+//Esta definición funciona para los 3 heaps a implementar
 struct Articulo {
-    char nombre_autor[21];   //Se puede hacer mejor xd, ahora si de verdad, luego vemos 
-    char apellidos_autor[41]; 
-    char titulo[71];          
-    char ruta[51];            
-    char anio[5];             
-    char resumen[81];         
+    char *nombre_autor;   
+    char *apellidos_autor; 
+    char *titulo;          
+    char *ruta;            
+    int anio;             
+    char *resumen;         
 };
+
+struct Heap{
+    struct Articulo *array;
+    int capacidad;
+    int tamano;
+};
+
+
 //Funciones para el manejo de la lista enlazada:
 
-struct Dnodo* crear_Dnodo(int n){
-    struct Dnodo* nn = calloc(1, sizeof(struct Dnodo));
-    if(nn == NULL){
+struct Heap* crear_heap(int capacidad){
+
+    struct Heap* nuevo_heap = calloc(1, sizeof(struct Heap));
+    if(nuevo_heap == NULL){
         return NULL;
     }
 
-    nn -> num = n;
-    nn -> sigt = NULL;
-    nn -> ant = NULL;
-    return nn;
-}
+    nuevo_heap -> capacidad = capacidad;
+    nuevo_heap -> tamano = 0;
 
-struct Dlista* crear_Dlista(){
-    struct Dlista* lista = calloc(1, sizeof(struct Dlista));
-    if(lista == NULL){
-        return NULL;
-    }
-    lista -> inicio = NULL;
-    return lista;
-}
+    nuevo_heap -> array = (struct Articulo*)calloc(1, capacidad * sizeof(struct Articulo)); // / Se usa el casting para que el puntero generico que devuelve calloc se transforme al valor que espera el array (Articulo en este caso) xd
 
-int insertar_inicio_Dlista(struct Dlista* lista, int n){
-    if(lista == NULL){
-        return -1; // ! Si la lista no existe porque no se creo o por otro error la función termina
-    }
-
-    struct Dnodo* nn = crear_Dnodo(n);
-    if(nn == NULL){
-        return -1; // ! Si el nodo no se crea la función termina
-    }
-
-    nn -> sigt = lista -> inicio;
-
-    if(lista -> inicio != NULL){
-        lista -> inicio -> ant = nn;
-    }
-
-    lista -> inicio = nn;
-    return 0;
-}
-
-//Funciones para el manejo del Heap:
-//*********************************************************************** */
-
-struct HeapArticulo* crear_heap_articulos(int capacidad,
-                                          int (*comparador)(const struct Articulo*, const struct Articulo*)) {
-    if(capacidad <= 0 || comparador == NULL) return NULL;
-
-    struct HeapArticulo* h = calloc(1, sizeof(struct HeapArticulo));
-    if(h == NULL) return NULL;
-
-    h->array = calloc(capacidad, sizeof(struct Articulo));
-    if(h->array == NULL) {
-        free(h);
+    if(nuevo_heap -> array == NULL){
+        free(nuevo_heap);
         return NULL;
     }
 
-    h->size = 0;
-    h->capacity = capacidad;
-    h->comparador = comparador;
-    return h;
+    return nuevo_heap;
+
 }
 
-// intercambia dos posiciones del array
-void swap_articulo(struct Articulo *a, struct Articulo *b) {
-    struct Articulo tmp;
-    memcpy(&tmp, a, sizeof(struct Articulo));
-    memcpy(a, b, sizeof(struct Articulo));
-    memcpy(b, &tmp, sizeof(struct Articulo));
-}
+// / Aqui se insertan los articulos dependiendo del ordenamiento de cada uno en el heap que le corresponda:
 
-//mantener propiedad de montículo máximo según comparador
-void heapify_articulos(struct HeapArticulo* heap, int i) {
-    if(heap == NULL) return;
-    int largest = i;
-    int left = 2 * i + 1;
-    int right = 2 * i + 2;
-
-    if(left < heap->size && heap->comparador(&heap->array[left], &heap->array[largest]) > 0)
-        largest = left;
-
-    if(right < heap->size && heap->comparador(&heap->array[right], &heap->array[largest]) > 0)
-        largest = right;
-
-    if(largest != i) {
-        swap_articulo(&heap->array[i], &heap->array[largest]);
-        heapify_articulos(heap, largest);
+int insertar_heap_CantPalabras(struct Heap* heap, struct Articulo articulo){
+    if(heap -> tamano == heap -> capacidad){
+        return -1;
     }
-}
 
+    heap -> tamano++;
+    int i = heap -> tamano - 1;
+    heap -> array[i] = articulo;
 
-int insertar_heap_articulo(struct HeapArticulo* heap, const struct Articulo* art) {
-    if(heap == NULL || art == NULL) return -1;
-    if(heap->size == heap->capacity) return -1; // overflow
+    //todo: Más adelante se puede imprementar que en el struct Articulo se guarde la cantidad de palabras que tiene el titulo para simplificar esto:
+    int palabras_hijo = contar_palabras(heap -> array[i].titulo);
 
-    int i = heap->size;
-    
-    memcpy(&heap->array[i], art, sizeof(struct Articulo));
-    heap->size++;
+    while(i != 0){
+        int indice_padre = (i-1)/2;
+        int palabras_padre = contar_palabras(heap -> array[indice_padre].titulo);
 
+        if(palabras_hijo < palabras_padre){
+            struct Articulo temp = heap -> array[i];
+            heap -> array[i] = heap -> array[indice_padre];
+            heap -> array[indice_padre] = temp;
 
-    while(i != 0 && heap->comparador(&heap->array[i], &heap->array[(i - 1) / 2]) > 0) {
-        swap_articulo(&heap->array[i], &heap->array[(i - 1) / 2]);
-        i = (i - 1) / 2;
+            i = indice_padre;
+        }else{
+            break;
+        }
+
     }
     return 0;
+    
 }
 
-// extraer máximo 
-int extraer_max_articulo(struct HeapArticulo* heap, struct Articulo* out) {
-    if(heap == NULL || out == NULL) return -1;
-    if(heap->size <= 0) return -1;
+struct Articulo extraerArticulo_menor(struct Heap* heap){
+    if (heap == NULL || heap->tamano == 0) {
 
-    
-    memcpy(out, &heap->array[0], sizeof(struct Articulo));
-
-    
-    heap->array[0] = heap->array[heap->size - 1];
-    heap->size--;
-    heapify_articulos(heap, 0);
-    return 0;
+    }
+    //todo: Falta poner lo de eliminar y burbujear si es que se implementa con borrar el min (Creo que hay que hacerlo porque es la unica manera de obtener el min)
+    return heap -> array[0];
 }
+
 // - Funciones para manejo de memoria:
 
-int liberar_Dlista(struct Dlista* lista){
-    if(lista == NULL){
+int liberar_heap(struct Heap* heap){
+    if(heap == NULL){
         return 0;
     }
-    struct Dnodo* actual = lista -> inicio;
-    struct Dnodo* siguiente = NULL; // ! Este nodo evita que el nodo actual se vuelva invalido cuando se es liberado
 
-    while(actual != NULL){
-        siguiente = actual -> sigt;
-        free(actual);
-        actual = siguiente;
+    if(heap -> array != NULL){
+        for(int i = 0; i < heap->tamano; i++){
+            if(heap->array[i].nombre_autor) free(heap->array[i].nombre_autor);
+            if(heap->array[i].apellidos_autor) free(heap->array[i].apellidos_autor);
+            if(heap->array[i].titulo) free(heap->array[i].titulo);
+            if(heap->array[i].ruta) free(heap->array[i].ruta);
+            if(heap->array[i].resumen) free(heap->array[i].resumen);
+        }
+        free(heap -> array);
     }
 
-    free(lista);
+    free(heap);
     return 0;
+
 }
 
-void liberar_heap_articulos(struct HeapArticulo* heap) {
-    if(heap == NULL) return;
-    free(heap->array);
-    free(heap);
+// - Funciones para el manejo de archivos:
+
+void split(char *linea, char *campos[], int *numCampos, const char *sep){
+
+    char *token = strtok(linea, sep);
+    int i = 0;
+
+    while(token != NULL){
+        campos[i++] = token;
+        token = strtok(NULL, sep);
+    }
+
+    *numCampos = i;
+
+}
+
+int cargarIndice(struct Articulo lista[], int MAXARTICULOS, const char *ARCHIVO){
+
+    FILE *f = fopen(ARCHIVO, "r");
+    if(!f){
+        return -1;
+    }
+
+    char linea[2000];
+    int cantidad = 0;
+
+    while(fgets(linea, sizeof(linea), f) != NULL && cantidad < MAXARTICULOS){
+        linea[strcspn(linea, "\n")] = 0;
+
+        char *campos[10];
+        int numCampos = 0;
+
+        split(linea, campos, &numCampos, "|");
+        if(numCampos < 0){
+            continue;
+        }
+
+            lista[cantidad].nombre_autor = strdup(campos[0]);
+            lista[cantidad].apellidos_autor = strdup(campos[1]);
+            lista[cantidad].titulo = strdup(campos[2]);
+            lista[cantidad].ruta = strdup(campos[3]);
+            lista[cantidad].anio = atoi(campos[4]); 
+            lista[cantidad].resumen = strdup(campos[5]);
+
+            cantidad++;  
+    }
+    fclose(f);
+    return cantidad;
+
 }
 
 // - Funciones para realizar debugging:
 
-int imprimir_Dlista(struct Dlista* lista){
-    if(lista == NULL){
-        return 0;
+void imprimir_heap(struct Heap* heap){
+    for(int i = 0; i < heap -> tamano; i++){
+        printf("Autor: %s\n", heap->array[i].nombre_autor);
+        printf("Apellidos autor: %s\n", heap->array[i].apellidos_autor);
+        printf("Titulo: %s\n", heap->array[i].titulo);
+        printf("Ruta: %s\n", heap->array[i].ruta);
+        printf("Año: %d\n", heap->array[i].anio);
+        printf("Resumen: %s\n", heap->array[i].resumen);
+        printf("\n");
     }
-
-    struct Dnodo* actual = lista -> inicio;
-    while(actual != NULL){
-        printf("%d\n", actual -> num);
-        actual = actual -> sigt;
-    }
-    return 0;
-
 }
 
-void imprimir_articulo(const struct Articulo* articulo) {
-    if(articulo == NULL) return;
-    printf("Autor: %s %s\n", articulo->nombre_autor, articulo->apellidos_autor);
-    printf("Titulo: %s\n", articulo->titulo);
-    printf("Ruta: %s\n", articulo->ruta);
-    printf("Anio: %s\n", articulo->anio);
-    printf("Resumen: %s\n", articulo->resumen);
-    printf("---------------\n");
+void imprimir_articulo(struct Articulo articulo){
+    printf("Autor: %s\n", articulo.nombre_autor);
+    printf("Apellidos autor: %s\n", articulo.apellidos_autor);
+    printf("Titulo: %s\n", articulo.titulo);
+    printf("Ruta: %s\n", articulo.ruta);
+    printf("Año: %d\n", articulo.anio);
+    printf("Resumen: %s\n", articulo.resumen);
+    printf("\n");
 }
 
-
-
-
+// - Función principal:
 
 int main(){
+    // * Variables ara los archivos:
+    int MAXARTICULOS = 10;
+    const char *ARCHIVO = "Documentos/Archivos.txt";
+
     // * Iniciar las estructuras:
-    struct Dlista* listaDoblementeEnlazada = crear_Dlista();
-    insertar_inicio_Dlista(listaDoblementeEnlazada, 1);
-    insertar_inicio_Dlista(listaDoblementeEnlazada, 2);
-    insertar_inicio_Dlista(listaDoblementeEnlazada, 3);
-    insertar_inicio_Dlista(listaDoblementeEnlazada, 4);
-    insertar_inicio_Dlista(listaDoblementeEnlazada, 5);
 
-    // * Prueba:
-    imprimir_Dlista(listaDoblementeEnlazada); // / Deberia imprimir: 5, 4, 3, 2, 1 separados por un salto de linea xd
+    struct Heap* heap = crear_heap(MAXARTICULOS);
 
+    // Se cargan los archivos
+    struct Articulo listaArticulos[MAXARTICULOS]; //todo: Más adelante se puede cambiar por una lista simple
+    int indicesCargados = cargarIndice(listaArticulos, MAXARTICULOS, ARCHIVO);
+
+    //Añadir al heap:
+    if(indicesCargados <= 0){
+        printf("XD");
+        return -1;
+    }
+
+    for(int i = 0; i < indicesCargados; i++){
+        insertar_heap_CantPalabras(heap,listaArticulos[i]);
+    }
+
+    int opcion;
+    do{
+        printf("\n========== MENU DE ORDENAMIENTOS ==========\n");
+        printf("1. Ordenar por TÍTULO\n");
+        printf("2. Ordenar por TAMAÑO DEL TÍTULO\n");
+        printf("3. Ordenar por NOMBRE DE ARCHIVO\n");
+        printf("4. Ordenar por PALABRA\n");
+        printf("5. SALIR\n");
+        printf("===========================================\n");
+        printf("Seleccione una opción: ");
+        scanf("%d", &opcion);
+
+        switch(opcion){
+            case 2:
+                struct Articulo articuloMenor = extraerArticulo_menor(heap);
+                printf("\n"); //todo: Añade un espacio en la parte de arriba del primer articulo para que se vea mejor xd
+                imprimir_articulo(articuloMenor);
+                break;
+            case 5:
+                printf("Saliendo...\n");
+                break;
+            default:
+                printf("\nOpción no válida. Intente de nuevo.\n");
+                continue;
+        }
+
+    }while(opcion != 5);
+
+    // * Liberar la memoria usada
+    liberar_heap(heap);
 }
