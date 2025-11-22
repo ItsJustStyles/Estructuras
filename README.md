@@ -1,8 +1,6 @@
 <h1 align="center">Proyectos de estructura de datos xd</h1>
 
-<h2>⚠️ [ADVERTENCIA DE RUTA] El proyecto puede fallar, pues este toma un archivo txt para leer los países, por lo que puede que al leer la ruta en la que se encuentra este falle. La sección para cambiar la ruta se encuentra en el main del programa.</h2>
-
-<h2> Proyecto realizado por los estudiantes Justin Lacayo Picado y Maicol Araya Urbina.</h2>
+<h2> Proyectos realizados por los estudiantes Justin Lacayo Picado y Maicol Araya Urbina.</h2>
 
 <p align="center">
   <img src="https://media1.tenor.com/m/5pHY-K_rUo0AAAAC/86-eighty-six.gif" alt="vladilena GIF">
