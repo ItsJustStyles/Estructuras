@@ -3,8 +3,89 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 // - Funciones para manejar el ordenamiento de los articulos:
+
+char* normalizar_texto(const char* titulo_original){
+
+    if(titulo_original == NULL){
+        printf("A");
+        return NULL;
+    }
+
+    size_t len = strlen(titulo_original);
+
+    char *titulo_normalizado = (char*)calloc(len + 1, sizeof(char));
+
+    if(titulo_normalizado == NULL){
+        return NULL;
+    }
+
+    int j = 0;
+    int i = 0;
+    while(titulo_original[i] != '\0'){
+        unsigned char c = titulo_original[i];
+        if((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == ' ' || c == ','){
+
+            titulo_normalizado[j++] = tolower(c);
+            i++;
+
+        }else{
+
+            if(c == 0xC3){ // ? Corresponde al valor 'identificador' de las letras multibye en UTF - 8
+
+                unsigned char c2 = titulo_original[i + 1];
+                bool multiByte = false;
+
+                switch (c2)
+                {
+                case 0x80: case 0x81: case 0x84: case 0xa1:
+                    titulo_normalizado[j++] = 'a';
+                    multiByte = true;
+                    break;
+                case 0x88: case 0x89: case 0x8b: case 0xa9:
+                    titulo_normalizado[j++] = 'e';
+                    multiByte = true;
+                    break;
+                case 0x8d: case 0x8f: case 0xad:
+                    titulo_normalizado[j++] = 'i';
+                    multiByte = true;
+                    break;
+                case 0x93: case 0x92: case 0xb3: case 0xb2:
+                    titulo_normalizado[j++] = 'o';
+                    multiByte = true;
+                    break;
+                case 0x9a: case 0x99: case 0xba: case 0xb9:
+                    titulo_normalizado[j++] = 'u';
+                    multiByte = true;
+                    break;
+                case 0x91: case 0xb1:
+                    titulo_normalizado[j++] = 'n'; 
+                    multiByte = true;
+                    break;
+                default:
+                    multiByte = false;
+                    break;
+                }
+
+                if(multiByte){
+                    i += 2;
+                }else{
+                    i++;
+                }
+
+            }else{
+                i++;
+            }
+        }
+
+    }
+
+    titulo_normalizado[j] = '\0';
+    //printf("%s\n", titulo_normalizado);
+    return titulo_normalizado;
+}
 
 int contar_palabras(char *texto){
 
@@ -35,6 +116,27 @@ int contar_palabras(char *texto){
 
 }
 
+int contar_ocurrencias(const char *texto, const char *palabra) {
+    if (!texto || !palabra) return 0;
+
+    int count = 0;
+    size_t len = strlen(palabra);
+
+    char *texto_normalizado = normalizar_texto(texto);
+    const char *p = texto_normalizado;
+
+    while ((p = strstr(p, palabra)) != NULL) {
+        count++;
+        p += len;
+    }
+
+    if(texto_normalizado != NULL){
+        free(texto_normalizado);
+    }
+
+    return count;
+}
+
 // - Definiciones de  estructuras de datos:
 
 // Lista doblemente enlazada:
@@ -50,22 +152,12 @@ struct Articulo {
     char *resumen;         
 };
 
+// Los heaps
 struct Heap{
     struct Articulo *array;
     int capacidad;
     int tamano;
 };
-
-
-
-// Función auxiliar:
-void intercambiar(struct Articulo *a, struct Articulo *b) {
-    struct Articulo temp = *a;
-    *a = *b;
-    *b = temp;
-}
-
-// Los heaps
 
 struct Heap* crear_heap(int capacidad){
 
@@ -77,7 +169,7 @@ struct Heap* crear_heap(int capacidad){
     nuevo_heap -> capacidad = capacidad;
     nuevo_heap -> tamano = 0;
 
-    nuevo_heap -> array = (struct Articulo*)calloc(1, capacidad * sizeof(struct Articulo)); // / Se usa el casting para que el puntero generico que devuelve calloc se transforme al valor que espera el array (Articulo en este caso) xd
+    nuevo_heap -> array = (struct Articulo*)calloc(1, capacidad * sizeof(struct Articulo)); // * Se usa el casting para que el puntero generico que devuelve calloc se transforme al valor que espera el array (Articulo en este caso) xd
 
     if(nuevo_heap -> array == NULL){
         free(nuevo_heap);
@@ -88,7 +180,25 @@ struct Heap* crear_heap(int capacidad){
 
 }
 
-// / Aqui se insertan los articulos dependiendo del ordenamiento de cada uno en el heap que le corresponda: Por tamano
+//* Función auxiliar para intercambiar Articulos en el heap
+void intercambiar(struct Articulo *a, struct Articulo *b) {
+    struct Articulo temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+//* Función para imprimir articulos
+void imprimir_articulo(struct Articulo articulo){
+    printf("Autor: %s\n", articulo.nombre_autor);
+    printf("Apellidos autor: %s\n", articulo.apellidos_autor);
+    printf("Titulo: %s\n", articulo.titulo);
+    printf("Ruta: %s\n", articulo.ruta);
+    printf("Año: %d\n", articulo.anio);
+    printf("Resumen: %s\n", articulo.resumen);
+    printf("\n");
+}
+
+// / Aqui se insertan los articulos dependiendo del ordenamiento de cada uno en el heap que le corresponda: Por tamano del titulo
 
 int insertar_heap_tamanoTitulo(struct Heap* heap, struct Articulo articulo, int orden){
     if(heap -> tamano == heap -> capacidad){
@@ -191,6 +301,9 @@ struct Articulo extraerHeap_tamanoTitulo(struct Heap* heap, int orden){
 }
 
 void heapSortPorTamanoTitulo(struct Articulo lista[], int indicesCargados, struct Heap* heap, int orden){
+
+        heap -> tamano = 0;
+
     for(int i = 0; i  < indicesCargados; i++){
         insertar_heap_tamanoTitulo(heap, lista[i], orden);
     }
@@ -199,18 +312,12 @@ void heapSortPorTamanoTitulo(struct Articulo lista[], int indicesCargados, struc
 
         struct Articulo articulo = extraerHeap_tamanoTitulo(heap, orden);
     
-        printf("Autor: %s\n", articulo.nombre_autor);
-        printf("Apellidos autor: %s\n", articulo.apellidos_autor);
-        printf("Titulo: %s\n", articulo.titulo);
-        printf("Ruta: %s\n", articulo.ruta);
-        printf("Año: %d\n", articulo.anio);
-        printf("Resumen: %s\n", articulo.resumen);
-        printf("\n");
+        imprimir_articulo(articulo);
 
     }
 
 }
-// / Aqui se insertan los articulos dependiendo del ordenamiento de cada uno en el heap que le corresponda:Por titulo
+// / Por titulo (Alfabeticamente)
 
 int insertar_heap_titulo(struct Heap* heap, struct Articulo articulo, int orden) {
     if (heap->tamano == heap->capacidad) {
@@ -224,9 +331,17 @@ int insertar_heap_titulo(struct Heap* heap, struct Articulo articulo, int orden)
     while (i != 0) {
         int padre = (i - 1) / 2;
 
-        int cmp = strcmp(heap->array[i].titulo, heap->array[padre].titulo);
+        char *titulo_hijo = normalizar_texto(heap -> array[i].titulo);
+        char *titulo_padre = normalizar_texto(heap -> array[padre].titulo);
 
-        
+        int cmp = 0;
+        if(titulo_hijo != NULL && titulo_padre != NULL){
+            cmp = strcmp(titulo_hijo, titulo_padre);
+        }
+
+        if(titulo_hijo != NULL) free(titulo_hijo);
+        if(titulo_padre != NULL) free(titulo_padre);
+
         if ((orden == 1 && cmp < 0) || (orden == 2 && cmp > 0)) {
             intercambiar(&heap->array[i], &heap->array[padre]);
             i = padre;
@@ -244,19 +359,44 @@ void heapify_titulo(struct Heap* heap, int i, int orden) {
     int der = 2 * i + 2;
 
     if (izq < heap->tamano) {
-        int cmp = strcmp(heap->array[izq].titulo, heap->array[mejor].titulo);
 
+        char *titulo_izq = normalizar_texto(heap -> array[izq].titulo);
+        char *titulo_mejor = normalizar_texto(heap -> array[mejor].titulo);
+        
+        int cmp = 0;
+
+        if(titulo_izq != NULL && titulo_mejor != NULL){
+            cmp = strcmp(titulo_izq, titulo_mejor);
+        }
+        
         if ((orden == 1 && cmp < 0) || (orden == 2 && cmp > 0)) {
             mejor = izq;
         }
+
+        if(titulo_izq != NULL) free(titulo_izq);
+        if(titulo_mejor != NULL) free(titulo_mejor);
+
     }
 
     if (der < heap->tamano) {
-        int cmp = strcmp(heap->array[der].titulo, heap->array[mejor].titulo);
+
+        char *titulo_der = normalizar_texto(heap -> array[der].titulo);
+        char *titulo_mejor = normalizar_texto(heap -> array[mejor].titulo);
+        
+        int cmp = 0;
+        cmp = strcmp(titulo_der, titulo_mejor);
+
+        if(titulo_der != NULL && titulo_mejor != NULL){
+            cmp = strcmp(titulo_der, titulo_mejor);
+        }
 
         if ((orden == 1 && cmp < 0) || (orden == 2 && cmp > 0)) {
             mejor = der;
         }
+
+        if(titulo_mejor != NULL) free(titulo_der);
+        if(titulo_mejor != NULL) free(titulo_mejor);
+
     }
 
     if (mejor != i) {
@@ -282,20 +422,138 @@ struct Articulo extraer_heap_titulo(struct Heap* heap, int orden) {
 
 void heapSortPorTitulo(struct Articulo lista[], int n, struct Heap* heap, int orden) {
 
-    heap->tamano = 0; // Reset
+    heap -> tamano = 0;
 
     for (int i = 0; i < n; i++) {
         insertar_heap_titulo(heap, lista[i], orden);
     }
 
     for (int i = 0; i < n; i++) {
+
         struct Articulo art = extraer_heap_titulo(heap, orden);
         imprimir_articulo(art);
+
+    }
+}
+
+// / Por nombre de archivo:
+
+int insertar_heap_nombre_archivo(struct Heap* heap, struct Articulo articulo, int orden){
+    if(heap -> tamano == heap -> capacidad){
+        return -1;
+    }
+
+    int i = heap -> tamano;
+    heap -> array[i] = articulo;
+    heap -> tamano++;
+
+    while(i != 0){
+        int padre = (i - 1)/2;
+
+        char *texto_hijo = normalizar_texto(heap -> array[i].ruta);
+        char *texto_padre = normalizar_texto(heap -> array[padre].ruta);
+
+        int cmp = 0;
+        if(texto_hijo != NULL && texto_padre != NULL){
+            cmp = strcmp(texto_hijo, texto_padre);
+        }
+
+        if(texto_hijo != NULL) free(texto_hijo);
+        if(texto_padre != NULL) free(texto_padre);
+
+        if((orden == 1 && cmp < 0) || (orden == 2 && cmp > 0)){
+            intercambiar(&heap -> array[i], &heap -> array[padre]);
+            i = padre;
+        }else{
+            break;
+        }
+    }
+
+    return 0;
+
+}
+
+void heapify_nombre_archivo(struct Heap* heap, int i, int orden){
+    int mejor = i;
+    int izq = 2 * i + 1;
+    int der = 2 * i + 2;
+
+    if(izq < heap -> tamano){
+
+        char *texto_izq = normalizar_texto(heap -> array[izq].ruta);
+        char *texto_mejor = normalizar_texto(heap -> array[mejor].ruta);
+
+        int cmp = 0;
+        if(texto_izq != NULL && texto_mejor != NULL){
+            cmp = strcmp(texto_izq, texto_mejor);
+        }
+
+        if(texto_izq != NULL) free(texto_izq);
+        if(texto_mejor != NULL) free(texto_mejor);
+
+        if((orden == 1 && cmp < 0) || orden == 2 && cmp > 0){
+            mejor = izq;
+        }
+
+    }
+
+    if(der < heap -> tamano){
+
+        char *texto_der = normalizar_texto(heap -> array[der].ruta);
+        char *texto_mejor = normalizar_texto(heap -> array[mejor].ruta);
+
+        int cmp = 0;
+        if(texto_mejor != NULL && texto_der != NULL){
+            cmp = strcmp(texto_der, texto_mejor);
+        }
+
+        if(texto_der != NULL) free(texto_der);
+        if(texto_mejor != NULL) free(texto_mejor);
+
+        if((orden == 1 && cmp < 0) || (orden == 2 && cmp > 0)){
+            mejor = der;
+        }
+
+    }
+
+    if(mejor != i){
+        intercambiar(&heap -> array[i], &heap -> array[mejor]);
+        heapify_nombre_archivo(heap, mejor, orden);
+    }
+
+}
+
+struct Articulo extraerHeap_nombre_archivo(struct Heap* heap, int orden){
+    if(heap -> tamano == 0){
+        struct Articulo vacio = {0};
+        return vacio;
+    }
+
+    struct Articulo top = heap->array[0];
+    heap->array[0] = heap->array[heap->tamano - 1];
+    heap->tamano--;
+
+    heapify_nombre_archivo(heap, 0, orden);
+
+    return top;
+}
+
+void heapSortPorNombreArchivo(struct Articulo lista[], int indicesCargados, struct Heap* heap, int orden){
+
+    heap -> tamano = 0;
+
+    for(int i = 0; i < indicesCargados; i++){
+        insertar_heap_nombre_archivo(heap, lista[i], orden);
+    }
+
+    for(int i = 0; i < indicesCargados; i++){
+        struct Articulo articuloExtraido = extraerHeap_nombre_archivo(heap, orden);
+        imprimir_articulo(articuloExtraido);
     }
 }
 
 
-// / Aqui se insertan los articulos dependiendo del ordenamiento de cada uno en el heap que le corresponda:Por Nombre
+// / Por palabra:
 
 int insertar_heap_palabra(struct Heap* heap, struct Articulo articulo, const char *palabra, int orden) {
     if (heap->tamano == heap->capacidad) return -1;
@@ -375,17 +633,23 @@ struct Articulo extraerHeap_palabra(struct Heap* heap, const char *palabra, int 
 void heapSortPorPalabra(struct Articulo lista[], int n, struct Heap* heap, const char *palabra, int orden) {
 
     heap->tamano = 0;
+    char *palabra_normalizada = normalizar_texto(palabra);
 
     for (int i = 0; i < n; i++) {
-        insertar_heap_palabra(heap, lista[i], palabra, orden);
+        insertar_heap_palabra(heap, lista[i], palabra_normalizada, orden);
     }
 
     printf("\nORDENANDO POR PALABRA: \"%s\"\n\n", palabra);
 
     for (int i = 0; i < n; i++) {
-        struct Articulo art = extraerHeap_palabra(heap, palabra, orden);
+        struct Articulo art = extraerHeap_palabra(heap, palabra_normalizada, orden);
         imprimir_articulo(art);
     }
+
+    if(palabra_normalizada != NULL){
+        free(palabra_normalizada);
+    }
+
 }
 
 
@@ -477,35 +741,6 @@ void imprimir_heap(struct Heap* heap){
     }
 }
 
-void imprimir_articulo(struct Articulo articulo){
-    printf("Autor: %s\n", articulo.nombre_autor);
-    printf("Apellidos autor: %s\n", articulo.apellidos_autor);
-    printf("Titulo: %s\n", articulo.titulo);
-    printf("Ruta: %s\n", articulo.ruta);
-    printf("Año: %d\n", articulo.anio);
-    printf("Resumen: %s\n", articulo.resumen);
-    printf("\n");
-}
-
-
-//Funciones auxiliares-Pongale color
-
-int contar_ocurrencias(const char *texto, const char *palabra) {
-    if (!texto || !palabra) return 0;
-
-    int count = 0;
-    size_t len = strlen(palabra);
-
-    const char *p = texto;
-
-    while ((p = strstr(p, palabra)) != NULL) {
-        count++;
-        p += len;
-    }
-
-    return count;
-}
-
 // - Función principal:
 
 int main() {
@@ -527,7 +762,7 @@ int main() {
         printf("\n========== MENU DE ORDENAMIENTOS ==========\n");
         printf("1. Ordenar por TÍTULO\n");
         printf("2. Ordenar por TAMAÑO DEL TÍTULO\n");
-        printf("3. Ordenar por NOMBRE DE ARCHIVO (PENDIENTE)\n");
+        printf("3. Ordenar por NOMBRE DE ARCHIVO\n");
         printf("4. Ordenar por PALABRA\n");
         printf("5. SALIR\n");
         printf("===========================================\n");
@@ -541,7 +776,7 @@ int main() {
                 printf("1. Ascendente \n");
                 printf("2. Descendente \n");
                 scanf("%d", &orden);
-
+                printf("\n");
                 heapSortPorTitulo(listaArticulos, indicesCargados, heap, orden);
                 break;
 
@@ -551,14 +786,18 @@ int main() {
                 printf("1. Ascendente\n");
                 printf("2. Descendente\n");
                 scanf("%d", &orden);
-
+                printf("\n");
                 heapSortPorTamanoTitulo(listaArticulos, indicesCargados, heap, orden);
                 break;
 
 
             case 3:
                 printf("\n--- ORDENAR POR NOMBRE DE ARCHIVO ---\n");
-                printf("(Aún no implementado)\n\n");
+                printf("1. Ascendente\n");
+                printf("2. Descendente\n");
+                scanf("%d", &orden);
+                printf("\n");
+                heapSortPorNombreArchivo(listaArticulos, indicesCargados, heap, orden);
                 break;
 
 
@@ -566,7 +805,7 @@ int main() {
                 printf("\n--- ORDENAR POR PALABRA EN RESUMEN ---\n");
                 printf("Digite la palabra a buscar: ");
                 scanf("%s", palabra);
-
+                printf("\n");
                 printf("1. Menos ocurrencias primero\n");
                 printf("2. Más ocurrencias primero\n");
                 scanf("%d", &orden);
