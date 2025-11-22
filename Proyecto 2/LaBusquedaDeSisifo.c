@@ -652,6 +652,96 @@ void heapSortPorPalabra(struct Articulo lista[], int n, struct Heap* heap, const
 
 }
 
+//todo: Un ordenamiento por año de los articulos por si es necesario el uso del mismo (Por lo del enredo del grupo xd):
+
+int insertar_heap_year(struct Heap* heap, struct Articulo articulo, int orden){
+    if(heap -> tamano == heap -> capacidad){
+        return -1;
+    }
+
+    int i = heap -> tamano;
+    heap -> array[i] = articulo;
+    heap -> tamano++;
+
+    int yearHijo = heap -> array[i].anio;
+    while(i != 0){
+        int padre = (i - 1)/2;
+        int yearPadre = heap -> array[padre].anio;
+
+        if((orden == 1 && yearHijo < yearPadre) || (orden == 2 && yearHijo > yearPadre)){
+            intercambiar(&heap -> array[i], &heap -> array[padre]);
+            i = padre;
+        }else{
+            break;
+        }
+    }
+    return 0;
+}
+
+void heapify_year(struct Heap* heap, int i, int orden){
+    int mejor = i;
+    int izq = 2 * i + 1;
+    int der = 2 * i + 2;
+
+    
+    int yearHijoDer = heap -> array[der].anio;
+
+    if(izq < heap -> tamano){
+        
+        int yearHijoIzq = heap -> array[izq].anio;
+        int yearPadre = heap -> array[mejor].anio;
+
+        if((orden == 1 && yearHijoIzq < yearPadre) || (orden == 2 && yearHijoIzq > yearPadre)){
+            mejor = izq;
+        }
+
+    }
+
+    if(der < heap -> tamano){
+
+        int yearPadre = heap -> array[mejor].anio;
+        int yearHijoDer = heap -> array[der].anio;
+        
+        if((orden == 1 && yearHijoDer < yearPadre) || (orden == 2 && yearHijoDer > yearPadre)){
+        mejor = der;
+    }
+
+    }
+
+    if(mejor != i){
+        intercambiar(&heap -> array[i], &heap -> array[mejor]);
+        heapify_year(heap, mejor, orden);
+    }
+}
+
+struct Articulo extraer_heap_year(struct Heap* heap, int orden){
+    if (heap->tamano == 0) {
+        struct Articulo vacio = {0};
+        return vacio;
+    }
+
+    struct Articulo top = heap -> array[0];
+
+    heap -> array[0] = heap -> array[heap -> tamano - 1];
+    heap -> tamano--;
+    heapify_year(heap, 0, orden);
+
+    return top;
+}
+
+void heapSortPorYear(struct Articulo listaArticulos[],int cantIndices, struct Heap* heap, int orden){
+
+    heap -> tamano = 0;
+
+    for(int i = 0; i < cantIndices; i++){
+        insertar_heap_year(heap, listaArticulos[i], orden);
+    }
+
+    for(int i = 0; i < cantIndices; i++){
+        struct Articulo art = extraer_heap_year(heap, orden);
+        imprimir_articulo(art);
+    }
+}
 
 // - Funciones para manejo de memoria:
 
@@ -765,6 +855,7 @@ int main() {
         printf("3. Ordenar por NOMBRE DE ARCHIVO\n");
         printf("4. Ordenar por PALABRA\n");
         printf("5. SALIR\n");
+        printf("6. Ordenar por AÑO\n"); //todo: Nuevo ordenamiento por si es necesario
         printf("===========================================\n");
         printf("Seleccione una opción: ");
         scanf("%d", &opcion);
@@ -818,6 +909,15 @@ int main() {
                 printf("Saliendo...\n");
                 break;
 
+            case 6: //todo: Nuevo ordenamiento por si es necesario
+                printf("\n--- ORDENAR POR AÑO ---\n");
+                printf("1. Ascendente\n");
+                printf("2. Descendente\n");
+                scanf("%d", &orden);                
+                printf("\n");
+
+                heapSortPorYear(listaArticulos, indicesCargados, heap, orden);
+                break;
 
             default:
                 printf("\nOpción no válida. Intente de nuevo.\n");
