@@ -283,15 +283,16 @@ void heapify_tamanoTitulo(struct Heap* heap, int i, int orden){
 }
 
 struct Articulo extraerHeap_tamanoTitulo(struct Heap* heap, int orden){
+    struct Articulo vacio = {0};
     if (heap == NULL || heap->tamano == 0) {
-
+        return vacio;
     }
     
-    struct Articulo min_articulo = heap -> array[0];
+    struct Articulo min_articulo = heap->array[0];
 
     intercambiar(&heap->array[0], &heap->array[heap->tamano - 1]);
 
-    heap -> tamano--;
+    heap->tamano--;
 
     if (heap->tamano > 0) {
         heapify_tamanoTitulo(heap, 0, orden); 
@@ -300,23 +301,21 @@ struct Articulo extraerHeap_tamanoTitulo(struct Heap* heap, int orden){
     return min_articulo;
 }
 
-void heapSortPorTamanoTitulo(struct Articulo lista[], int indicesCargados, struct Heap* heap, int orden){
 
-        heap -> tamano = 0;
+void heapSortPorTamanoTitulo(struct Articulo lista[], int indicesCargados, struct Heap* heap, int orden, int cantidad){
+    heap->tamano = 0;
 
-    for(int i = 0; i  < indicesCargados; i++){
+    for(int i = 0; i < indicesCargados; i++){
         insertar_heap_tamanoTitulo(heap, lista[i], orden);
     }
 
-    for(int i = 0; i < indicesCargados; i++){
-
+    int mostrar = (cantidad < indicesCargados) ? cantidad : indicesCargados;
+    for(int i = 0; i < mostrar; i++){
         struct Articulo articulo = extraerHeap_tamanoTitulo(heap, orden);
-    
         imprimir_articulo(articulo);
-
     }
-
 }
+
 // / Por titulo (Alfabeticamente)
 
 int insertar_heap_titulo(struct Heap* heap, struct Articulo articulo, int orden) {
@@ -359,34 +358,28 @@ void heapify_titulo(struct Heap* heap, int i, int orden) {
     int der = 2 * i + 2;
 
     if (izq < heap->tamano) {
-
-        char *titulo_izq = normalizar_texto(heap -> array[izq].titulo);
-        char *titulo_mejor = normalizar_texto(heap -> array[mejor].titulo);
+        char *titulo_izq = normalizar_texto(heap->array[izq].titulo);
+        char *titulo_mejor = normalizar_texto(heap->array[mejor].titulo);
         
         int cmp = 0;
-
-        if(titulo_izq != NULL && titulo_mejor != NULL){
+        if (titulo_izq != NULL && titulo_mejor != NULL) {
             cmp = strcmp(titulo_izq, titulo_mejor);
         }
-        
+
         if ((orden == 1 && cmp < 0) || (orden == 2 && cmp > 0)) {
             mejor = izq;
         }
 
-        if(titulo_izq != NULL) free(titulo_izq);
-        if(titulo_mejor != NULL) free(titulo_mejor);
-
+        if (titulo_izq != NULL) free(titulo_izq);
+        if (titulo_mejor != NULL) free(titulo_mejor);
     }
 
     if (der < heap->tamano) {
+        char *titulo_der = normalizar_texto(heap->array[der].titulo);
+        char *titulo_mejor = normalizar_texto(heap->array[mejor].titulo);
 
-        char *titulo_der = normalizar_texto(heap -> array[der].titulo);
-        char *titulo_mejor = normalizar_texto(heap -> array[mejor].titulo);
-        
         int cmp = 0;
-        cmp = strcmp(titulo_der, titulo_mejor);
-
-        if(titulo_der != NULL && titulo_mejor != NULL){
+        if (titulo_der != NULL && titulo_mejor != NULL) {
             cmp = strcmp(titulo_der, titulo_mejor);
         }
 
@@ -394,9 +387,8 @@ void heapify_titulo(struct Heap* heap, int i, int orden) {
             mejor = der;
         }
 
-        if(titulo_mejor != NULL) free(titulo_der);
-        if(titulo_mejor != NULL) free(titulo_mejor);
-
+        if (titulo_der != NULL) free(titulo_der);
+        if (titulo_mejor != NULL) free(titulo_mejor);
     }
 
     if (mejor != i) {
@@ -404,6 +396,7 @@ void heapify_titulo(struct Heap* heap, int i, int orden) {
         heapify_titulo(heap, mejor, orden);
     }
 }
+
 
 struct Articulo extraer_heap_titulo(struct Heap* heap, int orden) {
     if (heap->tamano == 0) {
@@ -420,19 +413,17 @@ struct Articulo extraer_heap_titulo(struct Heap* heap, int orden) {
     return top;
 }
 
-void heapSortPorTitulo(struct Articulo lista[], int n, struct Heap* heap, int orden) {
-
-    heap -> tamano = 0;
+void heapSortPorTitulo(struct Articulo lista[], int n, struct Heap* heap, int orden, int cantidad) {
+    heap->tamano = 0;
 
     for (int i = 0; i < n; i++) {
         insertar_heap_titulo(heap, lista[i], orden);
     }
 
-    for (int i = 0; i < n; i++) {
-
+    int mostrar = (cantidad < n) ? cantidad : n;
+    for (int i = 0; i < mostrar; i++) {
         struct Articulo art = extraer_heap_titulo(heap, orden);
         imprimir_articulo(art);
-
     }
 }
 
@@ -478,8 +469,7 @@ void heapify_nombre_archivo(struct Heap* heap, int i, int orden){
     int izq = 2 * i + 1;
     int der = 2 * i + 2;
 
-    if(izq < heap -> tamano){
-
+    if(izq < heap->tamano){
         char *texto_izq = normalizar_texto(heap -> array[izq].ruta);
         char *texto_mejor = normalizar_texto(heap -> array[mejor].ruta);
 
@@ -491,14 +481,12 @@ void heapify_nombre_archivo(struct Heap* heap, int i, int orden){
         if(texto_izq != NULL) free(texto_izq);
         if(texto_mejor != NULL) free(texto_mejor);
 
-        if((orden == 1 && cmp < 0) || orden == 2 && cmp > 0){
+        if ((orden == 1 && cmp < 0) || (orden == 2 && cmp > 0)) {
             mejor = izq;
         }
-
     }
 
-    if(der < heap -> tamano){
-
+    if(der < heap->tamano){
         char *texto_der = normalizar_texto(heap -> array[der].ruta);
         char *texto_mejor = normalizar_texto(heap -> array[mejor].ruta);
 
@@ -510,18 +498,18 @@ void heapify_nombre_archivo(struct Heap* heap, int i, int orden){
         if(texto_der != NULL) free(texto_der);
         if(texto_mejor != NULL) free(texto_mejor);
 
-        if((orden == 1 && cmp < 0) || (orden == 2 && cmp > 0)){
+        if ((orden == 1 && cmp < 0) || (orden == 2 && cmp > 0)) {
             mejor = der;
         }
-
     }
 
     if(mejor != i){
         intercambiar(&heap -> array[i], &heap -> array[mejor]);
         heapify_nombre_archivo(heap, mejor, orden);
     }
-
 }
+
+
 
 struct Articulo extraerHeap_nombre_archivo(struct Heap* heap, int orden){
     if(heap -> tamano == 0){
@@ -538,15 +526,15 @@ struct Articulo extraerHeap_nombre_archivo(struct Heap* heap, int orden){
     return top;
 }
 
-void heapSortPorNombreArchivo(struct Articulo lista[], int indicesCargados, struct Heap* heap, int orden){
-
-    heap -> tamano = 0;
+void heapSortPorNombreArchivo(struct Articulo lista[], int indicesCargados, struct Heap* heap, int orden, int cantidad){
+    heap->tamano = 0;
 
     for(int i = 0; i < indicesCargados; i++){
         insertar_heap_nombre_archivo(heap, lista[i], orden);
     }
 
-    for(int i = 0; i < indicesCargados; i++){
+    int mostrar = (cantidad < indicesCargados) ? cantidad : indicesCargados;
+    for(int i = 0; i < mostrar; i++){
         struct Articulo articuloExtraido = extraerHeap_nombre_archivo(heap, orden);
         imprimir_articulo(articuloExtraido);
     }
@@ -630,8 +618,7 @@ struct Articulo extraerHeap_palabra(struct Heap* heap, const char *palabra, int 
     return top;
 }
 
-void heapSortPorPalabra(struct Articulo lista[], int n, struct Heap* heap, const char *palabra, int orden) {
-
+void heapSortPorPalabra(struct Articulo lista[], int n, struct Heap* heap, const char *palabra, int orden, int cantidad) {
     heap->tamano = 0;
     char *palabra_normalizada = normalizar_texto(palabra);
 
@@ -641,7 +628,8 @@ void heapSortPorPalabra(struct Articulo lista[], int n, struct Heap* heap, const
 
     printf("\nORDENANDO POR PALABRA: \"%s\"\n\n", palabra);
 
-    for (int i = 0; i < n; i++) {
+    int mostrar = (cantidad < n) ? cantidad : n;
+    for (int i = 0; i < mostrar; i++) {
         struct Articulo art = extraerHeap_palabra(heap, palabra_normalizada, orden);
         imprimir_articulo(art);
     }
@@ -649,7 +637,6 @@ void heapSortPorPalabra(struct Articulo lista[], int n, struct Heap* heap, const
     if(palabra_normalizada != NULL){
         free(palabra_normalizada);
     }
-
 }
 
 //todo: Un ordenamiento por año de los articulos por si es necesario el uso del mismo (Por lo del enredo del grupo xd):
@@ -683,29 +670,22 @@ void heapify_year(struct Heap* heap, int i, int orden){
     int izq = 2 * i + 1;
     int der = 2 * i + 2;
 
-    
-    int yearHijoDer = heap -> array[der].anio;
-
     if(izq < heap -> tamano){
-        
         int yearHijoIzq = heap -> array[izq].anio;
         int yearPadre = heap -> array[mejor].anio;
 
         if((orden == 1 && yearHijoIzq < yearPadre) || (orden == 2 && yearHijoIzq > yearPadre)){
             mejor = izq;
         }
-
     }
 
     if(der < heap -> tamano){
-
         int yearPadre = heap -> array[mejor].anio;
         int yearHijoDer = heap -> array[der].anio;
         
         if((orden == 1 && yearHijoDer < yearPadre) || (orden == 2 && yearHijoDer > yearPadre)){
-        mejor = der;
-    }
-
+            mejor = der;
+        }
     }
 
     if(mejor != i){
@@ -713,6 +693,7 @@ void heapify_year(struct Heap* heap, int i, int orden){
         heapify_year(heap, mejor, orden);
     }
 }
+
 
 struct Articulo extraer_heap_year(struct Heap* heap, int orden){
     if (heap->tamano == 0) {
@@ -729,15 +710,15 @@ struct Articulo extraer_heap_year(struct Heap* heap, int orden){
     return top;
 }
 
-void heapSortPorYear(struct Articulo listaArticulos[],int cantIndices, struct Heap* heap, int orden){
-
-    heap -> tamano = 0;
+void heapSortPorYear(struct Articulo listaArticulos[],int cantIndices, struct Heap* heap, int orden, int cantidad){
+    heap->tamano = 0;
 
     for(int i = 0; i < cantIndices; i++){
         insertar_heap_year(heap, listaArticulos[i], orden);
     }
 
-    for(int i = 0; i < cantIndices; i++){
+    int mostrar = (cantidad < cantIndices) ? cantidad : cantIndices;
+    for(int i = 0; i < mostrar; i++){
         struct Articulo art = extraer_heap_year(heap, orden);
         imprimir_articulo(art);
     }
@@ -845,7 +826,7 @@ int main() {
     struct Articulo listaArticulos[MAXARTICULOS];
     int indicesCargados = cargarIndice(listaArticulos, MAXARTICULOS, ARCHIVO);
 
-    int opcion, orden;
+    int opcion, orden, cantidad;
     char palabra[200];
 
     do {
@@ -855,73 +836,69 @@ int main() {
         printf("3. Ordenar por NOMBRE DE ARCHIVO\n");
         printf("4. Ordenar por PALABRA\n");
         printf("5. SALIR\n");
-        printf("6. Ordenar por AÑO\n"); //todo: Nuevo ordenamiento por si es necesario
+        printf("6. Ordenar por AÑO\n");
         printf("===========================================\n");
         printf("Seleccione una opción: ");
         scanf("%d", &opcion);
 
+        if (opcion == 5) {
+            printf("Saliendo...\n");
+            break;
+        }
+
+        if (opcion < 1 || opcion > 6) {
+            printf("\nOpción no válida. Intente de nuevo.\n");
+            continue;
+        }
+
+        printf("\n");
+        printf("1. Ascendente\n");
+        printf("2. Descendente\n");
+        printf("Seleccione el orden: ");
+        scanf("%d", &orden);
+
+        printf("¿Cuántos artículos desea mostrar? ");
+        scanf("%d", &cantidad);
+
+        // Validar que la cantidad no sea mayor que los artículos disponibles
+        if (cantidad > indicesCargados) {
+            cantidad = indicesCargados;
+            printf("Mostrando todos los %d artículos disponibles.\n", indicesCargados);
+        } else if (cantidad <= 0) {
+            cantidad = indicesCargados;
+            printf("Cantidad inválida. Mostrando todos los %d artículos.\n", indicesCargados);
+        }
+
+        printf("\n");
+
         switch (opcion) {
-
             case 1:
-                printf("\n--- ORDENAR POR TÍTULO ---\n");
-                printf("1. Ascendente \n");
-                printf("2. Descendente \n");
-                scanf("%d", &orden);
-                printf("\n");
-                heapSortPorTitulo(listaArticulos, indicesCargados, heap, orden);
+                printf("--- ORDENAR POR TÍTULO (%d artículos) ---\n\n", cantidad);
+                heapSortPorTitulo(listaArticulos, indicesCargados, heap, orden, cantidad);
                 break;
-
 
             case 2:
-                printf("\n--- ORDENAR POR TAMAÑO DE TÍTULO ---\n");
-                printf("1. Ascendente\n");
-                printf("2. Descendente\n");
-                scanf("%d", &orden);
-                printf("\n");
-                heapSortPorTamanoTitulo(listaArticulos, indicesCargados, heap, orden);
+                printf("--- ORDENAR POR TAMAÑO DE TÍTULO (%d artículos) ---\n\n", cantidad);
+                heapSortPorTamanoTitulo(listaArticulos, indicesCargados, heap, orden, cantidad);
                 break;
-
 
             case 3:
-                printf("\n--- ORDENAR POR NOMBRE DE ARCHIVO ---\n");
-                printf("1. Ascendente\n");
-                printf("2. Descendente\n");
-                scanf("%d", &orden);
-                printf("\n");
-                heapSortPorNombreArchivo(listaArticulos, indicesCargados, heap, orden);
+                printf("--- ORDENAR POR NOMBRE DE ARCHIVO (%d artículos) ---\n\n", cantidad);
+                heapSortPorNombreArchivo(listaArticulos, indicesCargados, heap, orden, cantidad);
                 break;
-
 
             case 4:
                 printf("\n--- ORDENAR POR PALABRA EN RESUMEN ---\n");
                 printf("Digite la palabra a buscar: ");
                 scanf("%s", palabra);
-                printf("\n");
-                printf("1. Menos ocurrencias primero\n");
-                printf("2. Más ocurrencias primero\n");
-                scanf("%d", &orden);
-
-                heapSortPorPalabra(listaArticulos, indicesCargados, heap, palabra, orden);
+                printf("Mostrando %d artículos:\n\n", cantidad);
+                heapSortPorPalabra(listaArticulos, indicesCargados, heap, palabra, orden, cantidad);
                 break;
 
-
-            case 5:
-                printf("Saliendo...\n");
+            case 6:
+                printf("--- ORDENAR POR AÑO (%d artículos) ---\n\n", cantidad);
+                heapSortPorYear(listaArticulos, indicesCargados, heap, orden, cantidad);
                 break;
-
-            case 6: //todo: Nuevo ordenamiento por si es necesario
-                printf("\n--- ORDENAR POR AÑO ---\n");
-                printf("1. Ascendente\n");
-                printf("2. Descendente\n");
-                scanf("%d", &orden);                
-                printf("\n");
-
-                heapSortPorYear(listaArticulos, indicesCargados, heap, orden);
-                break;
-
-            default:
-                printf("\nOpción no válida. Intente de nuevo.\n");
-                continue;
         }
 
     } while (opcion != 5);
