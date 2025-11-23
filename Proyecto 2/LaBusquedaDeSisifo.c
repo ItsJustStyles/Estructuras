@@ -200,6 +200,15 @@ void imprimir_articulo(struct Articulo articulo){
 
 // / Aqui se insertan los articulos dependiendo del ordenamiento de cada uno en el heap que le corresponda: Por tamano del titulo
 
+
+//  ORDENAMIENTO POR TAMAÑO DEL TÍTULO
+//  Este bloque ordena los artículos según la cantidad de caracteres que tiene 
+//  el campo "titulo". 
+//  Se utiliza cuando el usuario elige 
+//  "Ordenar por TAMAÑO DEL TÍTULO".
+
+
+
 int insertar_heap_tamanoTitulo(struct Heap* heap, struct Articulo articulo, int orden){
     if(heap -> tamano == heap -> capacidad){
         return -1;
@@ -318,6 +327,11 @@ void heapSortPorTamanoTitulo(struct Articulo lista[], int indicesCargados, struc
 
 // / Por titulo (Alfabeticamente)
 
+//  ORDENAMIENTO POR TÍTULO
+//  Este bloque ordena los artículos alfabéticamente usando su título.
+//  Se utiliza cuando el usuario elige:
+//      "Ordenar por TÍTULO (A–Z)".
+
 int insertar_heap_titulo(struct Heap* heap, struct Articulo articulo, int orden) {
     if (heap->tamano == heap->capacidad) {
         return -1;
@@ -428,6 +442,12 @@ void heapSortPorTitulo(struct Articulo lista[], int n, struct Heap* heap, int or
 }
 
 // / Por nombre de archivo:
+
+//  ORDENAMIENTO POR NOMBRE DE ARCHIVO
+//  Este bloque ordena los artículos usando el campo "ruta" (nombre/ubicación
+//  del archivo). Se normalizan las cadenas antes de comparar.
+//  Se utiliza cuando el usuario elige:
+//      "Ordenar por NOMBRE DE ARCHIVO".
 
 int insertar_heap_nombre_archivo(struct Heap* heap, struct Articulo articulo, int orden){
     if(heap -> tamano == heap -> capacidad){
@@ -543,6 +563,12 @@ void heapSortPorNombreArchivo(struct Articulo lista[], int indicesCargados, stru
 
 // / Por palabra:
 
+//  ORDENAMIENTO POR PALABRA
+//  Este bloque ordena los artículos según la cantidad de veces que
+//  aparece la palabra buscada dentro del texto del artículo.
+//  Se utiliza cuando el usuario elige:
+//      "Ordenar por PALABRA".
+
 int insertar_heap_palabra(struct Heap* heap, struct Articulo articulo, const char *palabra, int orden) {
     if (heap->tamano == heap->capacidad) return -1;
 
@@ -640,6 +666,11 @@ void heapSortPorPalabra(struct Articulo lista[], int n, struct Heap* heap, const
 }
 
 //todo: Un ordenamiento por año de los articulos por si es necesario el uso del mismo (Por lo del enredo del grupo xd):
+
+//  ORDENAMIENTO POR AÑO
+//  Este bloque ordena los artículos según el año de publicación.
+//  Se utiliza cuando el usuario elige:
+//      "Ordenar por AÑO".
 
 int insertar_heap_year(struct Heap* heap, struct Articulo articulo, int orden){
     if(heap -> tamano == heap -> capacidad){
