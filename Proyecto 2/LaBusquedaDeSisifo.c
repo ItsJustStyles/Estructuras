@@ -7,6 +7,9 @@
 
 // - Funciones para manejar el ordenamiento de los articulos:
 
+// Normaliza un texto: pasa a minúsculas, elimina caracteres raros
+// y convierte tildes y ñ a su forma simple.
+// Retorna una nueva cadena que debe liberarse con free().
 char* normalizar_texto(const char* titulo_original){
 
     if(titulo_original == NULL){
@@ -87,6 +90,9 @@ char* normalizar_texto(const char* titulo_original){
     return titulo_normalizado;
 }
 
+
+// Cuenta cuántas palabras tiene un texto.
+// Una palabra es cualquier secuencia separada por espacios.
 int contar_palabras(char *texto){
 
     if(texto == NULL){
@@ -115,6 +121,8 @@ int contar_palabras(char *texto){
     return contadorPalabras;
 
 }
+// Cuenta cuántas veces aparece una palabra dentro de un texto.
+// Antes normaliza el texto para ignorar tildes y mayúsculas.
 
 int contar_ocurrencias(const char *texto, const char *palabra) {
     if (!texto || !palabra) return 0;
@@ -848,7 +856,7 @@ void imprimir_heap(struct Heap* heap){
 int main() {
     // * Variables para los archivos:
     int MAXARTICULOS = 70;
-    const char *ARCHIVO = "Proyecto 2/Documentos/archivo.txt";
+    const char *ARCHIVO = "/home/maicol/Documentos/GitHub/Estructuras/Proyecto 2/Documentos/archivo.txt";
 
     // * Iniciar las estructuras:
     struct Heap* heap = crear_heap(MAXARTICULOS);
