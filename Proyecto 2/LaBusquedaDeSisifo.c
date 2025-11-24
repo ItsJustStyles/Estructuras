@@ -848,7 +848,7 @@ void imprimir_heap(struct Heap* heap){
 int main() {
     // * Variables para los archivos:
     int MAXARTICULOS = 70;
-    const char *ARCHIVO = "Documentos/Archivos.txt";
+    const char *ARCHIVO = "Proyecto 2/Documentos/archivo.txt";
 
     // * Iniciar las estructuras:
     struct Heap* heap = crear_heap(MAXARTICULOS);
@@ -861,7 +861,7 @@ int main() {
     char palabra[200];
 
     do {
-        printf("\n========== MENU DE ORDENAMIENTOS ==========\n");
+        printf("========== MENU DE ORDENAMIENTOS ==========\n");
         printf("1. Ordenar por TÍTULO\n");
         printf("2. Ordenar por TAMAÑO DEL TÍTULO\n");
         printf("3. Ordenar por NOMBRE DE ARCHIVO\n");
@@ -871,6 +871,7 @@ int main() {
         printf("===========================================\n");
         printf("Seleccione una opción: ");
         scanf("%d", &opcion);
+        while (getchar() != '\n');   // limpia buffer
 
         if (opcion == 5) {
             printf("Saliendo...\n");
@@ -878,64 +879,66 @@ int main() {
         }
 
         if (opcion < 1 || opcion > 6) {
-            printf("\nOpción no válida. Intente de nuevo.\n");
+            printf("Opción no válida. Intente de nuevo.\n");
             continue;
         }
 
-        printf("\n");
-        printf("1. Ascendente\n");
+        printf("\n1. Ascendente\n");
         printf("2. Descendente\n");
         printf("Seleccione el orden: ");
         scanf("%d", &orden);
+        while (getchar() != '\n');  // limpia buffer
 
         printf("¿Cuántos artículos desea mostrar? ");
         scanf("%d", &cantidad);
+        while (getchar() != '\n');  // limpia buffer
 
-        // Validar que la cantidad no sea mayor que los artículos disponibles
-        if (cantidad > indicesCargados) {
+
+        if (cantidad <= 0) {
+            printf("Cantidad inválida. Mostrando todos los artículos.\n");
             cantidad = indicesCargados;
-            printf("Mostrando todos los %d artículos disponibles.\n", indicesCargados);
-        } else if (cantidad <= 0) {
+        }
+        else if (cantidad > indicesCargados) {
+            printf("Se pidió más de los disponibles. Mostrando todos.\n");
             cantidad = indicesCargados;
-            printf("Cantidad inválida. Mostrando todos los %d artículos.\n", indicesCargados);
         }
 
         printf("\n");
 
         switch (opcion) {
             case 1:
-                printf("--- ORDENAR POR TÍTULO (%d artículos) ---\n\n", cantidad);
+                printf("— ORDENAR POR TÍTULO —\n");
                 heapSortPorTitulo(listaArticulos, indicesCargados, heap, orden, cantidad);
                 break;
 
             case 2:
-                printf("--- ORDENAR POR TAMAÑO DE TÍTULO (%d artículos) ---\n\n", cantidad);
+                printf("— ORDENAR POR TAMAÑO DEL TÍTULO —\n");
                 heapSortPorTamanoTitulo(listaArticulos, indicesCargados, heap, orden, cantidad);
                 break;
 
             case 3:
-                printf("--- ORDENAR POR NOMBRE DE ARCHIVO (%d artículos) ---\n\n", cantidad);
+                printf("— ORDENAR POR NOMBRE DE ARCHIVO —\n");
                 heapSortPorNombreArchivo(listaArticulos, indicesCargados, heap, orden, cantidad);
                 break;
 
             case 4:
-                printf("\n--- ORDENAR POR PALABRA EN RESUMEN ---\n");
+                printf("— ORDENAR POR PALABRA EN RESUMEN —\n");
                 printf("Digite la palabra a buscar: ");
                 scanf("%s", palabra);
-                printf("Mostrando %d artículos:\n\n", cantidad);
+                while (getchar() != '\n'); // limpia buffer
+
                 heapSortPorPalabra(listaArticulos, indicesCargados, heap, palabra, orden, cantidad);
                 break;
 
             case 6:
-                printf("--- ORDENAR POR AÑO (%d artículos) ---\n\n", cantidad);
+                printf("— ORDENAR POR AÑO —\n");
                 heapSortPorYear(listaArticulos, indicesCargados, heap, orden, cantidad);
                 break;
         }
 
     } while (opcion != 5);
 
-    // * Liberar la memoria usada
-    printf("%d artículos cargados.\n", indicesCargados);
+    printf("Liberando heap...\n");
     liberar_heap(heap);
 
     return 0;
