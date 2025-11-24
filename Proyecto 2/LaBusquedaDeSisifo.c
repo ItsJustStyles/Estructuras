@@ -584,14 +584,14 @@ int insertar_heap_palabra(struct Heap* heap, struct Articulo articulo, const cha
     heap->array[i] = articulo;
     heap->tamano++;
 
-    int occ_hijo = contar_ocurrencias(heap->array[i].resumen, palabra);
+    // AHORA BUSCA EN EL TÍTULO
+    int occ_hijo = contar_ocurrencias(heap->array[i].titulo, palabra);
 
     while (i != 0) {
         int padre = (i - 1) / 2;
 
-        int occ_padre = contar_ocurrencias(heap->array[padre].resumen, palabra);
+        int occ_padre = contar_ocurrencias(heap->array[padre].titulo, palabra);
 
-        
         if ((orden == 1 && occ_hijo < occ_padre) ||
             (orden == 2 && occ_hijo > occ_padre)) {
 
@@ -610,10 +610,11 @@ void heapify_palabra(struct Heap* heap, int i, const char *palabra, int orden) {
     int izq = 2 * i + 1;
     int der = 2 * i + 2;
 
-    int occ_mejor = contar_ocurrencias(heap->array[mejor].resumen, palabra);
+    int occ_mejor = contar_ocurrencias(heap->array[mejor].titulo, palabra);
 
     if (izq < heap->tamano) {
-        int occ_izq = contar_ocurrencias(heap->array[izq].resumen, palabra);
+        int occ_izq = contar_ocurrencias(heap->array[izq].titulo, palabra);
+
         if ((orden == 1 && occ_izq < occ_mejor) ||
             (orden == 2 && occ_izq > occ_mejor)) {
 
@@ -623,7 +624,8 @@ void heapify_palabra(struct Heap* heap, int i, const char *palabra, int orden) {
     }
 
     if (der < heap->tamano) {
-        int occ_der = contar_ocurrencias(heap->array[der].resumen, palabra);
+        int occ_der = contar_ocurrencias(heap->array[der].titulo, palabra);
+
         if ((orden == 1 && occ_der < occ_mejor) ||
             (orden == 2 && occ_der > occ_mejor)) {
 
@@ -636,6 +638,7 @@ void heapify_palabra(struct Heap* heap, int i, const char *palabra, int orden) {
         heapify_palabra(heap, mejor, palabra, orden);
     }
 }
+
 
 struct Articulo extraerHeap_palabra(struct Heap* heap, const char *palabra, int orden) {
     if (heap->tamano == 0) {
@@ -651,6 +654,7 @@ struct Articulo extraerHeap_palabra(struct Heap* heap, const char *palabra, int 
 
     return top;
 }
+
 
 void heapSortPorPalabra(struct Articulo lista[], int n, struct Heap* heap, const char *palabra, int orden, int cantidad) {
     heap->tamano = 0;
