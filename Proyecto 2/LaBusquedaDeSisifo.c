@@ -860,7 +860,7 @@ void imprimir_heap(struct Heap* heap){
 int main() {
     // * Variables para los archivos:
     int MAXARTICULOS = 70;
-    const char *ARCHIVO = "/home/maicol/Documentos/GitHub/Estructuras/Proyecto 2/Documentos/archivo.txt";
+    const char *ARCHIVO = "Documentos/archivo.txt";
 
     // * Iniciar las estructuras:
     struct Heap* heap = crear_heap(MAXARTICULOS);
