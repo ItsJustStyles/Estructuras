@@ -123,46 +123,74 @@ w: Weight: El peso, costo o distancia
 */
 void dijkstra(int start,int goal){
 
-    // Inicializa distancias y predecesores para todos los nodos
+    // Inicializa distancias y predecesores
     for(int i=0;i<nodes;i++){
         distancias[i]=INF;
         predecesor[i]=-1;
     }
     distancias[start]=0;
 
-    // Array para rastrear qué nodos han sido "finalizados" (visitados definitivamente)
     int used[nodes];
     for(int i=0;i<nodes;i++) used[i]=0;
 
-    //Bucle principal
+    printf("\n===== ESTADOS INTERMEDIOS DE DIJKSTRA =====\n\n");
+
     for(int it=0; it<nodes; it++){
 
         int u=-1, best=INF;
-        //Selección del nodo con menor distancia
         for(int v=0; v<nodes; v++)
-            //Busca entre nodos que NO han sido finalizados
-            //Y además tienen una menor distancia que la encontrada hasta ahora
-            if(!used[v] && distancias[v]<best){
-                best=distancias[v]; u=v;
+            if(!used[v] && distancias[v] < best){
+                best = distancias[v];
+                u = v;
             }
-        if(u==-1) break; // Si no se encontro ningun nodo accesible termina
-        if(u==goal) break; // Si ya llegamos a la meta también termina
 
-        used[u]=1;
-        
-        //Actualización de aristas
+        if(u == -1) break;
+        used[u] = 1;
+
+        // ---------------------------
+        //   Imprimir estado actual
+        // ---------------------------
+        printf("Iteración %d:\n", it+1);
+        printf("  Nodo seleccionado (mínimo actual): %d  [%d,%d]\n",
+               u, node_r[u], node_c[u]);
+
+        printf("  Distancias actuales:\n    ");
         for(int v=0; v<nodes; v++){
-            int w=adj_matrix[u*nodes+v];
-            if(w!=INF && !used[v]){
-                //Comprueba si el nuevo camino es menor al mejor conocido
-                if(distancias[u]+w < distancias[v]){
-                    distancias[v]=distancias[u]+w;
-                    predecesor[v]=u;
+            if(distancias[v] == INF) printf("INF ");
+            else printf("%d ", distancias[v]);
+        }
+        printf("\n");
+
+        printf("  Predecesores:\n    ");
+        for(int v=0; v<nodes; v++){
+            printf("%d ", predecesor[v]);
+        }
+        printf("\n\n");
+
+        if(u == goal) break;
+
+        // Relajación de aristas
+        for(int v=0; v<nodes; v++){
+            int w = adj_matrix[u*nodes + v];
+
+            if(w != INF && !used[v]){
+                if(distancias[u] + w < distancias[v]){
+
+                    printf("    Actualizando distancia de %d → %d: %d → %d\n",
+                           u, v, distancias[v], distancias[u]+w);
+
+                    distancias[v] = distancias[u] + w;
+                    predecesor[v] = u;
                 }
             }
         }
+
+        printf("\n");
     }
+
+    printf("===== FIN DE ESTADOS INTERMEDIOS =====\n\n");
 }
+
 
 void bfs(int start, int goal){
 
