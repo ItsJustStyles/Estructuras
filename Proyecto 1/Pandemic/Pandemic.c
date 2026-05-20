@@ -5,9 +5,14 @@
 #include <stdbool.h>
 
 //Funciones para manejo de datos;
-
+//aca jamas me tendran
 //Lista doblemente enlazada:
-
+struct people{
+    char nombre[20];
+    int edad;
+    struct people* sigt;
+    struct people* ante;
+};
 //Dnodo es por el doblemente enlazada, para diferenciar de la no enlazada y de los nodos de árboles, al igual que Dlista
 struct Dnodo{
     char pais[25]; //Se puede hacer mejor xd
